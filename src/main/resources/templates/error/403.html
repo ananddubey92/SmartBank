@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 Forbidden - SmartBank AI</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Custom Design CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex align-items-center justify-content-center auth-bg" style="min-height: 100vh;">
+
+    <div class="container text-center animate-fade-in py-5" style="max-width: 600px;">
+        <div class="glass-card p-5 border border-danger border-opacity-25" style="background: var(--bg-card);">
+            <div class="logo-circle mx-auto mb-4" style="width: 80px; height: 80px; background: rgba(239, 68, 68, 0.15); color: #ef4444; font-size: 2.5rem;">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            
+            <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30 px-3 py-1.5 rounded-pill small mb-3">
+                <i class="fa-solid fa-lock me-1"></i>SECURITY ACCESS DENIED
+            </span>
+
+            <h1 class="fw-bold mb-2">403 Forbidden</h1>
+            <h5 class="text-danger mb-3">Administrative Privileges Required</h5>
+            
+            <p class="text-secondary small mb-4" th:text="${message != null ? message : 'You do not have permission to access the Bank Administration Console or Admin APIs. This area is strictly reserved for users with ROLE_ADMIN authority.'}">
+                You do not have permission to access the Bank Administration Console or Admin APIs. This area is strictly reserved for users with ROLE_ADMIN authority.
+            </p>
+
+            <div class="p-3 rounded-3 mb-4 text-start small font-monospace" style="background: rgba(15, 23, 42, 0.03); border: 1px solid var(--border-color);">
+                <div class="text-secondary">Security Protocol: <span class="text-danger">RBAC_ENFORCEMENT_V2</span></div>
+                <div class="text-secondary">Required Role: <span class="text-warning">ROLE_ADMIN</span></div>
+                <div class="text-secondary">Status: <span class="text-danger">403 FORBIDDEN</span></div>
+            </div>
+            
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a th:href="@{/dashboard}" class="btn btn-primary-custom px-4 py-2">
+                    <i class="fa-solid fa-gauge-high me-2"></i>My Dashboard
+                </a>
+                <a th:href="@{/}" class="btn btn-secondary-custom px-4 py-2">
+                    <i class="fa-solid fa-house me-2"></i>Home
+                </a>
+                <form th:action="@{/logout}" method="post" class="d-inline m-0">
+                    <button type="submit" class="btn btn-outline-danger px-4 py-2">
+                        <i class="fa-solid fa-right-from-bracket me-2"></i>Switch Account
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

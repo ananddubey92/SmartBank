@@ -1,0 +1,414 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Financial Health & Spending Prediction - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('financial-health')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- Alerts -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Section Header -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2.5 py-1 x-small">
+                        <i class="fa-solid fa-heart-pulse me-1"></i>AI Wealth Intelligence
+                    </span>
+                    <span class="badge bg-primary bg-opacity-20 text-primary border border-primary border-opacity-25 px-2.5 py-1 x-small">
+                        <i class="fa-solid fa-chart-line me-1"></i>Predictive Forecasting
+                    </span>
+                </div>
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-heart-pulse me-2 text-success"></i>Financial Health Dashboard
+                </h3>
+                <p class="text-secondary mb-0">AI-driven financial well-being score, category breakdowns, and month-end spending predictions.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{/analytics}" class="btn btn-secondary-custom d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-info"></i>
+                    <span>Category Breakdown</span>
+                </a>
+                <a th:href="@{/transfer}" class="btn btn-primary-custom d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Transfer Money</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Top Health Score & Sub-Pillars Card -->
+        <div class="glass-card p-4 mb-4">
+            <div class="row align-items-center g-4">
+                <!-- Health Gauge (Col-md-4) -->
+                <div class="col-lg-4 col-md-5 text-center border-end-md border-opacity-10" style="border-color: var(--border-color);">
+                    <span class="x-small text-secondary text-uppercase tracking-wider font-semibold d-block mb-2">Overall Financial Health Score</span>
+                    
+                    <div style="position: relative; max-width: 200px; margin: 0 auto;">
+                        <canvas id="healthScoreGauge" width="200" height="200"></canvas>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" class="text-center">
+                            <h1 class="display-5 fw-extrabold text-white mb-0" id="healthScoreValue" th:text="${health != null ? health.financialHealthScore : 75}">75</h1>
+                            <span class="x-small text-secondary font-monospace">/ 100</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <span class="badge px-3 py-1.5 rounded-pill font-semibold"
+                              th:classappend="${health != null and health.healthGrade == 'EXCELLENT' ? 'bg-success bg-opacity-20 text-success border border-success border-opacity-25' : (health != null and health.healthGrade == 'GOOD' ? 'bg-info bg-opacity-20 text-info border border-info border-opacity-25' : (health != null and health.healthGrade == 'MODERATE' ? 'bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25' : 'bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25'))}">
+                            <i class="fa-solid fa-shield-heart me-1"></i>
+                            <span th:text="${health != null ? health.healthGrade : 'GOOD'}">GOOD</span>
+                        </span>
+                    </div>
+                    <p class="x-small text-secondary mt-2 mb-0">
+                        Weighted evaluation: 40% Savings Rate, 40% Spending Discipline, 20% Risk History.
+                    </p>
+                </div>
+
+                <!-- 3 Pillars Breakdown (Col-md-8) -->
+                <div class="col-lg-8 col-md-7 ps-lg-4">
+                    <h6 class="fw-bold text-white mb-3"><i class="fa-solid fa-layer-group me-2 text-gradient"></i>Core Health Dimensions</h6>
+
+                    <!-- 1. Savings Pillar -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-white"><i class="fa-solid fa-piggy-bank me-2 text-success"></i>Savings Ratio Score</span>
+                            <span class="small fw-bold text-success" th:text="${health != null ? health.savingsScore : 70} + ' / 100'">70 / 100</span>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 10px; background: rgba(255,255,255,0.05);">
+                            <div class="progress-bar bg-success rounded-pill" role="progressbar" 
+                                 th:style="'width: ' + (${health != null ? health.savingsScore : 70}) + '%;'"></div>
+                        </div>
+                        <span class="x-small text-secondary mt-1 d-block">Monthly Savings: ₹<strong class="text-white" th:text="${health != null ? #numbers.formatDecimal(health.currentMonthSavings, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> (<span th:text="${health != null ? health.savingsRate : 0.0}">0.0</span>% of total income)</span>
+                    </div>
+
+                    <!-- 2. Spending Pillar -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-white"><i class="fa-solid fa-scale-balanced me-2 text-info"></i>Spending Control Score</span>
+                            <span class="small fw-bold text-info" th:text="${health != null ? health.spendingScore : 80} + ' / 100'">80 / 100</span>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 10px; background: rgba(255,255,255,0.05);">
+                            <div class="progress-bar bg-info rounded-pill" role="progressbar" 
+                                 th:style="'width: ' + (${health != null ? health.spendingScore : 80}) + '%;'"></div>
+                        </div>
+                        <span class="x-small text-secondary mt-1 d-block">Monthly Outflow: ₹<strong class="text-white" th:text="${health != null ? #numbers.formatDecimal(health.currentMonthSpending, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong></span>
+                    </div>
+
+                    <!-- 3. Transaction Risk Safety Pillar -->
+                    <div class="mb-0">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-white"><i class="fa-solid fa-shield-halved me-2 text-warning"></i>Security & Transaction Safety Score</span>
+                            <span class="small fw-bold text-warning" th:text="${health != null ? health.transactionRiskScore : 90} + ' / 100'">90 / 100</span>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 10px; background: rgba(255,255,255,0.05);">
+                            <div class="progress-bar bg-warning rounded-pill" role="progressbar" 
+                                 th:style="'width: ' + (${health != null ? health.transactionRiskScore : 90}) + '%;'"></div>
+                        </div>
+                        <span class="x-small text-secondary mt-1 d-block">Zero account locks, low historical fraud flags</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Financial Figures Row (4 Cards) -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-sm-6">
+                <div class="summary-card hover-glow">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="x-small text-secondary text-uppercase tracking-wider font-semibold">Monthly Income</span>
+                        <div class="summary-icon-circle bg-success bg-opacity-15 text-success">
+                            <i class="fa-solid fa-arrow-down"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-success mt-2 mb-1">
+                        ₹<span th:text="${health != null ? #numbers.formatDecimal(health.currentMonthIncome, 1, 'COMMA', 2, 'POINT') : '0.00'}">65,000.00</span>
+                    </h3>
+                    <span class="x-small text-secondary">Verified inflows this calendar month</span>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6">
+                <div class="summary-card hover-glow">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="x-small text-secondary text-uppercase tracking-wider font-semibold">Current Spending</span>
+                        <div class="summary-icon-circle bg-danger bg-opacity-15 text-danger">
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-danger mt-2 mb-1">
+                        ₹<span th:text="${health != null ? #numbers.formatDecimal(health.currentMonthSpending, 1, 'COMMA', 2, 'POINT') : '0.00'}">17,000.00</span>
+                    </h3>
+                    <div class="d-flex align-items-center gap-1 mt-1">
+                        <span th:if="${health != null and health.monthOverMonthPercent != null and health.monthOverMonthPercent > 0}" class="x-small text-danger">
+                            <i class="fa-solid fa-arrow-trend-up me-1"></i>+<span th:text="${health.monthOverMonthPercent}">12</span>% vs last month
+                        </span>
+                        <span th:if="${health != null and health.monthOverMonthPercent != null and health.monthOverMonthPercent <= 0}" class="x-small text-success">
+                            <i class="fa-solid fa-arrow-trend-down me-1"></i><span th:text="${health.monthOverMonthPercent}">-5</span>% vs last month
+                        </span>
+                        <span th:if="${health == null or health.monthOverMonthPercent == null}" class="x-small text-secondary">First monitored month</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6">
+                <div class="summary-card hover-glow">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="x-small text-secondary text-uppercase tracking-wider font-semibold">Net Savings</span>
+                        <div class="summary-icon-circle bg-primary bg-opacity-15 text-primary">
+                            <i class="fa-solid fa-piggy-bank"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-primary mt-2 mb-1">
+                        ₹<span th:text="${health != null ? #numbers.formatDecimal(health.currentMonthSavings, 1, 'COMMA', 2, 'POINT') : '0.00'}">48,000.00</span>
+                    </h3>
+                    <span class="x-small text-secondary">Savings rate: <strong class="text-dark" th:text="${health != null ? health.savingsRate : 0.0}">0.0</strong>%</span>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6">
+                <div class="summary-card hover-glow">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="x-small text-secondary text-uppercase tracking-wider font-semibold">AI Predicted Month-End</span>
+                        <div class="summary-icon-circle bg-warning bg-opacity-15 text-warning">
+                            <i class="fa-solid fa-crystal-ball"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-warning mt-2 mb-1">
+                        ₹<span th:text="${prediction != null and prediction.predictedMonthEndSpending != null ? #numbers.formatDecimal(prediction.predictedMonthEndSpending, 1, 'COMMA', 2, 'POINT') : '0.00'}">24,500.00</span>
+                    </h3>
+                    <span class="x-small text-secondary">Est. daily run-rate: ₹<span th:text="${prediction != null and prediction.dailyAverageSpending != null ? #numbers.formatDecimal(prediction.dailyAverageSpending, 1, 'COMMA', 2, 'POINT') : '0.00'}">850.00</span>/day</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Intelligent Insights Banner -->
+        <div class="glass-card p-4 mb-4" th:if="${health != null and health.intelligentInsights != null and !health.intelligentInsights.isEmpty()}">
+            <h5 class="fw-bold text-white mb-3">
+                <i class="fa-solid fa-wand-magic-sparkles me-2 text-gradient"></i>AI Financial Insights & Recommendations
+            </h5>
+            <div class="row g-3">
+                <div class="col-md-4" th:each="insight : ${health.intelligentInsights}">
+                    <div class="p-3 rounded-3 h-100 border border-opacity-10 d-flex align-items-start gap-2.5"
+                         style="background: rgba(255, 255, 255, 0.02); border-color: var(--border-color);">
+                        <div class="avatar-initials-circle flex-shrink-0" style="width: 32px; height: 32px; background: rgba(56, 189, 248, 0.1); color: var(--accent-color);">
+                            <i class="fa-solid fa-lightbulb"></i>
+                        </div>
+                        <span class="x-small text-white-50" th:text="${insight}">AI insight description</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Visualizations (Two Columns: Trend Chart & Forecast Chart) -->
+        <div class="row g-4 mb-4">
+            <!-- 6-Month Income vs Expense Trend -->
+            <div class="col-lg-7 col-md-12">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-white mb-0">
+                            <i class="fa-solid fa-chart-line me-2 text-gradient"></i>Income vs. Expenses Trend
+                        </h5>
+                        <span class="badge bg-secondary-subtle text-white-50 x-small">Past 6 Months</span>
+                    </div>
+                    <p class="text-secondary small mb-3">Historical monthly comparison of credits vs debits with net accumulated savings.</p>
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="monthlyTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spending Prediction & Forecast -->
+            <div class="col-lg-5 col-md-12">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-white mb-0">
+                            <i class="fa-solid fa-bullseye me-2 text-warning"></i>Spending Forecast
+                        </h5>
+                        <span class="badge bg-warning bg-opacity-20 text-warning x-small">AI Run-Rate</span>
+                    </div>
+                    <p class="text-secondary small mb-3">Comparison between historical monthly averages, actual spending month-to-date, and projected month-end total.</p>
+                    
+                    <div style="height: 240px; position: relative;">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+
+                    <div class="mt-3 p-2.5 rounded-2" style="background: rgba(234, 179, 8, 0.08); border: 1px dashed rgba(234, 179, 8, 0.25);">
+                        <span class="x-small text-warning font-semibold d-block mb-1"><i class="fa-solid fa-clock-rotate-left me-1"></i>Forecast Confidence:</span>
+                        <p class="x-small text-secondary mb-0" th:text="${prediction != null ? prediction.predictionSummary : 'Predictive engine requires at least 3 transactions to establish confident baseline.'}">
+                            Projected month-end spending based on current daily spending velocity.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Save session token if present on page load -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const sessionToken = /*[[${sessionToken}]]*/ '';
+        if (sessionToken) {
+            localStorage.setItem('token', sessionToken);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Health Score Semi-Circular Gauge
+            const healthScore = /*[[${health != null ? health.financialHealthScore : 75}]]*/ 75;
+            const gaugeCanvas = document.getElementById('healthScoreGauge');
+                let gaugeColor = '#10b981';
+                if (healthScore < 40) gaugeColor = '#ef4444';
+                else if (healthScore < 60) gaugeColor = '#f59e0b';
+                else if (healthScore < 80) gaugeColor = '#84cc16';
+
+                new Chart(gaugeCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [healthScore, 100 - healthScore],
+                            backgroundColor: [gaugeColor, 'rgba(15, 23, 42, 0.08)'],
+                            borderWidth: 0,
+                            circumference: 240,
+                            rotation: 240
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '80%',
+                        plugins: {
+                            tooltip: { enabled: false }
+                        }
+                    }
+                });
+            }
+
+            // 2. 6-Month Income vs Expense Trend Chart
+            const trendMonths = /*[[${health != null ? health.trendMonths : null}]]*/ ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+            const incomeTrend = /*[[${health != null ? health.monthlyIncomeTrend : null}]]*/ [65000, 65000, 70000, 65000, 65000, 65000];
+            const expenseTrend = /*[[${health != null ? health.monthlyExpenseTrend : null}]]*/ [18000, 22000, 25000, 19000, 16000, 17000];
+
+            const trendCanvas = document.getElementById('monthlyTrendChart');
+            if (trendCanvas && trendMonths && incomeTrend && expenseTrend) {
+                new Chart(trendCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: trendMonths,
+                        datasets: [
+                            {
+                                label: 'Income (Credits)',
+                                data: incomeTrend,
+                                backgroundColor: 'rgba(5, 150, 105, 0.75)',
+                                borderRadius: 6,
+                                maxBarThickness: 24
+                            },
+                            {
+                                 label: 'Expenses (Debits)',
+                                 data: expenseTrend,
+                                 backgroundColor: 'rgba(239, 68, 68, 0.75)',
+                                 borderRadius: 6,
+                                 maxBarThickness: 24
+                             }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#4b5563', font: { family: 'Outfit', size: 11 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return ctx.dataset.label + ': ₹' + Number(ctx.raw).toLocaleString('en-IN');
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(15, 23, 42, 0.06)' },
+                                ticks: { color: '#4b5563', font: { size: 11 } }
+                            },
+                            y: {
+                                grid: { color: 'rgba(15, 23, 42, 0.06)' },
+                                ticks: {
+                                    color: '#4b5563',
+                                    font: { size: 10 },
+                                    callback: function(val) { return '₹' + (val / 1000) + 'k'; }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 3. Spending Forecast Chart
+            const forecastCanvas = document.getElementById('forecastChart');
+            const pastAvg = /*[[${prediction != null ? prediction.historicalAverageMonthlySpending : 20000}]]*/ 20000;
+            const actualSoFar = /*[[${prediction != null ? prediction.currentMonthActualSpending : 17000}]]*/ 17000;
+            const projectedEnd = /*[[${prediction != null ? prediction.predictedMonthEndSpending : 24500}]]*/ 24500;
+
+            if (forecastCanvas) {
+                new Chart(forecastCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: ['3-Mo Average', 'Actual (MTD)', 'Predicted Month-End'],
+                        datasets: [{
+                            data: [pastAvg, actualSoFar, projectedEnd],
+                            backgroundColor: [
+                                'rgba(148, 163, 184, 0.6)',
+                                'rgba(163, 230, 53, 0.85)',
+                                'rgba(15, 23, 42, 0.85)'
+                            ],
+                            borderRadius: 6,
+                            maxBarThickness: 36
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return ctx.label + ': ₹' + Number(ctx.raw).toLocaleString('en-IN');
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#4b5563', font: { size: 11 } }
+                            },
+                            y: {
+                                grid: { color: 'rgba(15, 23, 42, 0.06)' },
+                                ticks: {
+                                    color: '#4b5563',
+                                    font: { size: 10 },
+                                    callback: function(val) { return '₹' + (val / 1000) + 'k'; }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+        /*]]>*/
+    </script>
+</body>
+</html>

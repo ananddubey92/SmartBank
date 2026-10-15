@@ -1,0 +1,1132 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('UPI Payments - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <style>
+        /* UPI Module High-Contrast Custom Styling */
+        .upi-nav-tabs .nav-link {
+            color: #1e293b !important;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 10px 18px;
+            transition: all 0.2s ease;
+        }
+        .upi-nav-tabs .nav-link:hover {
+            background-color: rgba(15, 23, 42, 0.06) !important;
+            color: #0f172a !important;
+        }
+        .upi-nav-tabs .nav-link.active {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+        }
+        .upi-nav-tabs .nav-link.active i {
+            color: #a3e635 !important;
+        }
+        
+        .dark-stat-box {
+            background-color: #0f172a !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 12px;
+        }
+        .dark-stat-box .stat-label {
+            color: #94a3b8 !important;
+            font-size: 0.78rem;
+        }
+        .dark-stat-box .stat-value {
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+
+        /* High-contrast labels in dark modals */
+        .logout-modal-content .form-label-custom {
+            color: #f8fafc !important;
+        }
+        .logout-modal-content .text-secondary {
+            color: #94a3b8 !important;
+        }
+
+        /* Form radio buttons contrast */
+        .btn-check:checked + .btn-outline-secondary-custom {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+            border-color: #0f172a !important;
+        }
+        .btn-outline-secondary-custom {
+            color: #0f172a !important;
+            border-color: rgba(15, 23, 42, 0.2) !important;
+            font-weight: 600;
+        }
+        .btn-outline-secondary-custom:hover {
+            background-color: rgba(15, 23, 42, 0.08) !important;
+            color: #0f172a !important;
+        }
+    </style>
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('upi')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- System Alerts -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Section Header -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-qrcode me-2 text-warning"></i>UPI Banking Simulation
+                </h3>
+                <p class="text-secondary mb-0">Instant, 24x7 UPI transfers, QR payments, money requests & AI risk protection.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25 px-3 py-1.5 rounded-pill small">
+                    <i class="fa-solid fa-graduation-cap me-1"></i>College Project Simulation
+                </span>
+                <span th:if="${upiProfile != null and upiProfile.isLocked}" class="badge bg-danger text-white px-3 py-1.5 rounded-pill small animate-pulse">
+                    <i class="fa-solid fa-lock me-1"></i>UPI Security Locked
+                </span>
+            </div>
+        </div>
+
+        <!-- Top Profile & Limits Cards Row -->
+        <div class="row g-4 mb-4">
+            <!-- My UPI ID & Linked Account Card -->
+            <div class="col-lg-6 col-md-12">
+                <div class="glass-card p-4 h-100 position-relative overflow-hidden">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-initials-circle bg-warning text-dark font-extrabold fs-4" style="width: 48px; height: 48px;">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-dark mb-0" th:text="${upiProfile != null ? upiProfile.upiId : user.username + '@smartbank'}">username@smartbank</h5>
+                                <span class="x-small text-secondary">Linked Account: <strong class="text-dark" th:text="${upiProfile != null ? upiProfile.accountNumber : 'N/A'}">1002345678</strong></span>
+                            </div>
+                        </div>
+                        <div>
+                            <span th:if="${upiProfile != null and upiProfile.isActive}" class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2.5 py-1 rounded-pill x-small">
+                                <i class="fa-solid fa-circle-check me-1"></i>Active
+                            </span>
+                            <span th:unless="${upiProfile != null and upiProfile.isActive}" class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25 px-2.5 py-1 rounded-pill x-small">
+                                <i class="fa-solid fa-ban me-1"></i>Inactive
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3 dark-stat-box p-3">
+                        <div class="col-6">
+                            <div class="x-small stat-label">Bank / IFSC</div>
+                            <div class="small fw-semibold text-white">SmartBank AI / <span th:text="${upiProfile != null ? upiProfile.ifscCode : 'SMART000101'}">SMART000101</span></div>
+                        </div>
+                        <div class="col-6">
+                            <div class="x-small stat-label">Security PIN</div>
+                            <div class="small fw-semibold">
+                                <span th:if="${upiProfile != null and upiProfile.hasPin}" class="text-success"><i class="fa-solid fa-lock me-1"></i>6-Digit Set</span>
+                                <span th:unless="${upiProfile != null and upiProfile.hasPin}" class="text-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i>Not Set</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-primary-custom btn-sm" data-bs-toggle="modal" data-bs-target="#editUpiIdModal">
+                            <i class="fa-solid fa-pen-to-square me-1"></i>Change ID
+                        </button>
+                        <button type="button" class="btn btn-secondary-custom btn-sm" data-bs-toggle="modal" data-bs-target="#upiPinModal">
+                            <i class="fa-solid fa-key me-1"></i>Set/Change PIN
+                        </button>
+                        <button type="button" class="btn btn-secondary-custom btn-sm" onclick="openQrModal()">
+                            <i class="fa-solid fa-qrcode me-1"></i>My QR Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UPI Transaction Limits Card -->
+            <div class="col-lg-6 col-md-12">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-dark mb-0">
+                            <i class="fa-solid fa-gauge-high me-2 text-info"></i>UPI Transaction Limits
+                        </h6>
+                        <span class="x-small text-secondary">Configurable Limits</span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <div class="p-2.5 dark-stat-box">
+                                <span class="x-small stat-label d-block mb-1">Per Transaction Limit</span>
+                                <span class="fs-5 stat-value" th:text="'₹' + ${limits != null ? #numbers.formatDecimal(limits.perTransactionLimit, 1, 'COMMA', 2, 'POINT') : '50,000.00'}">₹50,000.00</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2.5 dark-stat-box">
+                                <span class="x-small stat-label d-block mb-1">Daily Max Limit</span>
+                                <span class="fs-5 stat-value" th:text="'₹' + ${limits != null ? #numbers.formatDecimal(limits.dailyLimit, 1, 'COMMA', 2, 'POINT') : '1,00,000.00'}">₹1,00,000.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between x-small mb-1">
+                            <span class="text-secondary">Used Today: <strong class="text-dark" th:text="'₹' + ${limits != null ? #numbers.formatDecimal(limits.usedToday, 1, 'COMMA', 2, 'POINT') : '0.00'}">₹0.00</strong></span>
+                            <span class="text-secondary">Remaining: <strong class="text-success" th:text="'₹' + ${limits != null ? #numbers.formatDecimal(limits.remainingDailyLimit, 1, 'COMMA', 2, 'POINT') : '1,00,000.00'}">₹1,00,000.00</strong></span>
+                        </div>
+                        <div class="progress bg-dark" style="height: 8px;">
+                            <div class="progress-bar bg-warning" role="progressbar" 
+                                 th:style="'width: ' + ${(limits != null and limits.dailyLimit.compareTo(T(java.math.BigDecimal).ZERO) > 0) ? (limits.usedToday.doubleValue() / limits.dailyLimit.doubleValue() * 100) : 0} + '%'"
+                                 aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Action Nav Tabs -->
+        <div class="glass-card mb-4 p-2">
+            <ul class="nav nav-pills upi-nav-tabs nav-fill gap-2" id="upiTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active py-2.5 fw-semibold" id="send-tab" data-bs-toggle="tab" data-bs-target="#sendPane" type="button" role="tab">
+                        <i class="fa-solid fa-paper-plane me-2 text-primary"></i>Send Money
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-2.5 fw-semibold" id="request-tab" data-bs-toggle="tab" data-bs-target="#requestPane" type="button" role="tab">
+                        <i class="fa-solid fa-hand-holding-dollar me-2 text-success"></i>Request Money
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-2.5 fw-semibold" id="qr-tab" data-bs-toggle="tab" data-bs-target="#qrPane" type="button" role="tab">
+                        <i class="fa-solid fa-qrcode me-2 text-warning"></i>Scan & Pay QR
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-2.5 fw-semibold" id="history-tab" data-bs-toggle="tab" data-bs-target="#historyPane" type="button" role="tab">
+                        <i class="fa-solid fa-clock-rotate-left me-2 text-info"></i>Transaction History
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-2.5 fw-semibold" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analyticsPane" type="button" role="tab">
+                        <i class="fa-solid fa-chart-pie me-2 text-purple"></i>Spending Analytics
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Tab Content Panes -->
+        <div class="tab-content" id="upiTabContent">
+
+            <!-- 1. SEND MONEY PANE -->
+            <div class="tab-pane fade show active" id="sendPane" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-7">
+                        <div class="glass-card p-4">
+                            <h5 class="fw-bold text-dark mb-3">
+                                <i class="fa-solid fa-paper-plane me-2 text-primary"></i>Send Money via UPI
+                            </h5>
+
+                            <form id="upiSendForm" onsubmit="handleUpiSendSubmit(event)">
+                                <!-- Send Method Selector -->
+                                <div class="mb-3">
+                                    <label class="form-label-custom">Send Option</label>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="sendMode" id="modeUpiId" value="UPI_ID" checked onclick="toggleSendMode('UPI_ID')">
+                                        <label class="btn btn-outline-secondary-custom py-2" for="modeUpiId"><i class="fa-solid fa-at me-1"></i>UPI ID</label>
+
+                                        <input type="radio" class="btn-check" name="sendMode" id="modePhone" value="PHONE" onclick="toggleSendMode('PHONE')">
+                                        <label class="btn btn-outline-secondary-custom py-2" for="modePhone"><i class="fa-solid fa-mobile-screen me-1"></i>Mobile No.</label>
+
+                                        <input type="radio" class="btn-check" name="sendMode" id="modeBank" value="BANK" onclick="toggleSendMode('BANK')">
+                                        <label class="btn btn-outline-secondary-custom py-2" for="modeBank"><i class="fa-solid fa-building-columns me-1"></i>Account + IFSC</label>
+                                    </div>
+                                </div>
+
+                                <!-- Input: UPI ID -->
+                                <div id="inputGroupUpiId" class="mb-3">
+                                    <label class="form-label-custom">Recipient UPI ID</label>
+                                    <div class="input-group">
+                                        <input type="text" id="recipientUpiId" class="form-control form-control-custom" placeholder="e.g. rahul@smartbank">
+                                        <button class="btn btn-secondary-custom" type="button" onclick="verifyBeneficiaryUpi()">
+                                            <i class="fa-solid fa-user-check me-1"></i>Verify
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Input: Mobile Number -->
+                                <div id="inputGroupPhone" class="mb-3 d-none">
+                                    <label class="form-label-custom">Recipient Registered Mobile Number</label>
+                                    <input type="text" id="recipientPhone" class="form-control form-control-custom" placeholder="e.g. 9876543210">
+                                </div>
+
+                                <!-- Input: Account + IFSC -->
+                                <div id="inputGroupBank" class="d-none">
+                                    <div class="mb-3">
+                                        <label class="form-label-custom">Account Number</label>
+                                        <input type="text" id="recipientAccountNumber" class="form-control form-control-custom" placeholder="e.g. 1009876543">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label-custom">IFSC Code</label>
+                                        <input type="text" id="recipientIfscCode" class="form-control form-control-custom" value="SMART000101">
+                                    </div>
+                                </div>
+
+                                <!-- Beneficiary Verification Status Banner -->
+                                <div id="beneficiaryBanner" class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 text-info small mb-3 d-none">
+                                    <i class="fa-solid fa-circle-info me-1"></i><span id="beneficiaryText">Beneficiary: Verified User</span>
+                                </div>
+
+                                <!-- Amount & Remarks -->
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label-custom">Amount (₹)</label>
+                                        <input type="number" id="sendAmount" class="form-control form-control-custom" step="any" min="1" placeholder="0.00" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label-custom">Category</label>
+                                        <select id="sendCategory" class="form-select form-control-custom">
+                                            <option value="OTHER">Other</option>
+                                            <option value="FOOD">Food & Dining</option>
+                                            <option value="SHOPPING">Shopping</option>
+                                            <option value="BILLS">Bills & Utilities</option>
+                                            <option value="TRAVEL">Travel</option>
+                                            <option value="ENTERTAINMENT">Entertainment</option>
+                                            <option value="HEALTHCARE">Healthcare</option>
+                                            <option value="EDUCATION">Education</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label-custom">Remarks / Note (Optional)</label>
+                                    <input type="text" id="sendRemarks" class="form-control form-control-custom" placeholder="What is this payment for?">
+                                </div>
+
+                                <button type="submit" class="btn btn-primary-custom w-100 py-2.5">
+                                    <i class="fa-solid fa-lock me-2"></i>Proceed to Pay
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Side Security & Limit Info -->
+                    <div class="col-lg-5">
+                        <div class="glass-card p-4 h-100">
+                            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-shield-halved me-2 text-success"></i>UPI Security Guard</h6>
+                            <ul class="list-unstyled small text-secondary d-flex flex-column gap-2 mb-4">
+                                <li><i class="fa-solid fa-check text-success me-2"></i>Encrypted 256-bit BCrypt PIN verification.</li>
+                                <li><i class="fa-solid fa-check text-success me-2"></i>Real-time 0–100 AI Fraud Risk Assessment.</li>
+                                <li><i class="fa-solid fa-check text-success me-2"></i>Step-Up OTP triggered automatically for high-risk payments.</li>
+                                <li><i class="fa-solid fa-check text-success me-2"></i>Atomic transaction rollback prevents money loss.</li>
+                            </ul>
+
+                            <div class="p-3 dark-stat-box">
+                                <span class="x-small stat-label d-block">Current Linked Balance</span>
+                                <span class="fs-4 stat-value" th:text="${accounts != null and !accounts.isEmpty() ? '₹' + #numbers.formatDecimal(accounts[0].balance, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹1,25,000.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. REQUEST MONEY PANE -->
+            <div class="tab-pane fade" id="requestPane" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <div class="glass-card p-4">
+                            <h5 class="fw-bold text-dark mb-3">
+                                <i class="fa-solid fa-hand-holding-dollar me-2 text-success"></i>Request Money
+                            </h5>
+                            <form id="upiRequestForm" onsubmit="handleUpiRequestSubmit(event)">
+                                <div class="mb-3">
+                                    <label class="form-label-custom">Target User's UPI ID</label>
+                                    <input type="text" id="reqTargetUpiId" class="form-control form-control-custom" placeholder="e.g. rohit@smartbank" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label-custom">Amount (₹)</label>
+                                    <input type="number" id="reqAmount" class="form-control form-control-custom" step="any" min="1" placeholder="0.00" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label-custom">Note / Reason</label>
+                                    <input type="text" id="reqRemarks" class="form-control form-control-custom" placeholder="e.g. Dinner bill split">
+                                </div>
+                                <button type="submit" class="btn btn-primary-custom w-100 py-2.5">
+                                    <i class="fa-solid fa-paper-plane me-2"></i>Send Payment Request
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Received & Sent Requests List -->
+                    <div class="col-lg-7">
+                        <div class="glass-card p-4">
+                            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-list-check me-2 text-warning"></i>Received Requests</h6>
+                            <div class="table-responsive mb-4" style="max-height: 240px; overflow-y: auto;">
+                                <table class="table table-custom align-middle mb-0">
+                                    <thead>
+                                        <tr class="x-small text-dark">
+                                            <th>Requester</th>
+                                            <th>Amount</th>
+                                            <th>Remarks</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="r : ${receivedRequests}">
+                                            <td class="small fw-semibold text-dark" th:text="${r.requesterUpiId}">user@smartbank</td>
+                                            <td class="small text-warning fw-bold" th:text="'₹' + ${#numbers.formatDecimal(r.amount, 1, 'COMMA', 2, 'POINT')}">₹500.00</td>
+                                            <td class="x-small text-secondary" th:text="${r.remarks}">Note</td>
+                                            <td>
+                                                <span class="badge" th:classappend="${r.status == 'PENDING' ? 'bg-warning text-dark' : (r.status == 'ACCEPTED' ? 'bg-success' : 'bg-danger')}" th:text="${r.status}">PENDING</span>
+                                            </td>
+                                            <td>
+                                                <div th:if="${r.status == 'PENDING'}" class="btn-group btn-group-sm">
+                                                    <button class="btn btn-success btn-sm px-2" th:data-id="${r.id}" th:data-amount="${r.amount}" th:data-requester="${r.requesterUpiId}" onclick="openAcceptRequestModal(this.getAttribute('data-id'), this.getAttribute('data-amount'), this.getAttribute('data-requester'))">Accept</button>
+                                                    <button class="btn btn-outline-danger btn-sm px-2" th:data-id="${r.id}" onclick="rejectMoneyRequest(this.getAttribute('data-id'))">Reject</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr th:if="${receivedRequests == null or receivedRequests.isEmpty()}">
+                                            <td colspan="5" class="text-center text-secondary py-3 small">No pending money requests received.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-paper-plane me-2 text-info"></i>Sent Requests</h6>
+                            <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                                <table class="table table-custom align-middle mb-0">
+                                    <thead>
+                                        <tr class="x-small text-dark">
+                                            <th>Target UPI</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="r : ${sentRequests}">
+                                            <td class="small fw-semibold text-dark" th:text="${r.targetUpiId}">user@smartbank</td>
+                                            <td class="small text-info fw-bold" th:text="'₹' + ${#numbers.formatDecimal(r.amount, 1, 'COMMA', 2, 'POINT')}">₹500.00</td>
+                                            <td><span class="badge bg-secondary" th:text="${r.status}">PENDING</span></td>
+                                            <td>
+                                                <button th:if="${r.status == 'PENDING'}" class="btn btn-outline-warning btn-sm py-0 px-2 x-small" th:data-id="${r.id}" onclick="cancelMoneyRequest(this.getAttribute('data-id'))">Cancel</button>
+                                            </td>
+                                        </tr>
+                                        <tr th:if="${sentRequests == null or sentRequests.isEmpty()}">
+                                            <td colspan="4" class="text-center text-secondary py-3 small">No sent payment requests.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. SCAN & PAY QR PANE -->
+            <div class="tab-pane fade" id="qrPane" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Personal QR Display -->
+                    <div class="col-lg-5 text-center">
+                        <div class="glass-card p-4">
+                            <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-qrcode me-2 text-warning"></i>My UPI QR Code</h5>
+                            <div class="p-3 bg-white rounded-3 d-inline-block shadow-lg mb-3">
+                                <img id="personalQrImage" th:src="${qrInfo != null ? qrInfo.qrCodeDataUrl : ''}" alt="UPI QR Code" style="width: 220px; height: 220px;" class="img-fluid">
+                            </div>
+                            <div class="fw-bold text-dark mb-1" th:text="${upiProfile != null ? upiProfile.upiId : 'username@smartbank'}">username@smartbank</div>
+                            <p class="x-small text-secondary mb-3">Scan this QR code using any UPI banking app to receive payments.</p>
+                            <a th:href="${qrInfo != null ? qrInfo.qrCodeDataUrl : '#'}" download="my_upi_qr.png" class="btn btn-secondary-custom btn-sm">
+                                <i class="fa-solid fa-download me-1"></i>Download QR Image
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Scan or Upload QR Form -->
+                    <div class="col-lg-7">
+                        <div class="glass-card p-4">
+                            <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-camera me-2 text-primary"></i>Scan & Pay</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label-custom">Upload QR Code Image File</label>
+                                <input type="file" id="qrFileInput" class="form-control form-control-custom" accept="image/*" onchange="handleQrFileUpload(event)">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label-custom">Or Paste QR Code Data / UPI URI</label>
+                                <textarea id="qrTextInput" class="form-control form-control-custom" rows="2" placeholder="e.g. upi://pay?pa=rahul@smartbank&pn=Rahul%20Sharma"></textarea>
+                            </div>
+
+                            <button class="btn btn-secondary-custom btn-sm mb-4" onclick="parseQrData()">
+                                <i class="fa-solid fa-magnifying-glass me-1"></i>Parse QR Data
+                            </button>
+
+                            <form id="qrPayForm" onsubmit="handleQrPaySubmit(event)">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label-custom">Recipient UPI ID</label>
+                                        <input type="text" id="qrRecipientId" class="form-control form-control-custom" readonly required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label-custom">Amount (₹)</label>
+                                        <input type="number" id="qrPayAmount" class="form-control form-control-custom" step="any" min="1" placeholder="0.00" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label-custom">Remarks</label>
+                                    <input type="text" id="qrPayRemarks" class="form-control form-control-custom" placeholder="QR Payment">
+                                </div>
+                                <button type="submit" class="btn btn-primary-custom w-100 py-2.5">
+                                    <i class="fa-solid fa-bolt me-2"></i>Pay via QR
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. TRANSACTION HISTORY PANE -->
+            <div class="tab-pane fade" id="historyPane" role="tabpanel">
+                <div class="glass-card p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-clock-rotate-left me-2 text-info"></i>UPI Transaction History</h5>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <input type="text" id="historySearch" class="form-control form-control-custom py-1 px-3 small" placeholder="Search UPI ID / Ref..." oninput="filterHistoryTable()">
+                            <select id="historyFilterDirection" class="form-select form-control-custom py-1 small" onchange="filterHistoryTable()">
+                                <option value="ALL">All (Sent & Received)</option>
+                                <option value="SENT">Sent</option>
+                                <option value="RECEIVED">Received</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle mb-0" id="upiHistoryTable">
+                            <thead>
+                                <tr class="x-small text-dark">
+                                    <th>Ref ID</th>
+                                    <th>Sender / Recipient</th>
+                                    <th>Direction</th>
+                                    <th>Amount</th>
+                                    <th>Date & Time</th>
+                                    <th>Status</th>
+                                    <th>Risk Score</th>
+                                    <th>Receipt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="tx : ${transactions}">
+                                    <td class="small font-monospace text-primary fw-bold" th:text="${tx.upiReferenceId}">UPI102938</td>
+                                    <td class="small">
+                                        <div class="fw-bold text-dark" th:text="${tx.direction == 'SENT' ? tx.receiverUpiId : tx.senderUpiId}">user@smartbank</div>
+                                        <span class="x-small text-secondary" th:text="${tx.remarks}">Payment</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge" th:classappend="${tx.direction == 'SENT' ? 'bg-danger bg-opacity-20 text-danger' : 'bg-success bg-opacity-20 text-success'}" th:text="${tx.direction}">SENT</span>
+                                    </td>
+                                    <td class="small fw-bold text-dark" th:text="'₹' + ${#numbers.formatDecimal(tx.amount, 1, 'COMMA', 2, 'POINT')}">₹1,000.00</td>
+                                    <td class="x-small text-secondary" th:text="${#temporals.format(tx.timestamp, 'dd MMM yyyy HH:mm')}">03 Oct 15:30</td>
+                                    <td>
+                                        <span class="badge" th:classappend="${tx.status == 'SUCCESS' ? 'bg-success' : (tx.status == 'BLOCKED' ? 'bg-danger' : 'bg-warning')}" th:text="${tx.status}">SUCCESS</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill x-small" th:classappend="${tx.riskScore > 60 ? 'bg-danger' : 'bg-success'}" th:text="${tx.riskScore + '/100'}">12/100</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-outline-info btn-sm py-1 px-2 x-small" th:data-ref="${tx.upiReferenceId}" onclick="viewReceipt(this.getAttribute('data-ref'))">
+                                            <i class="fa-solid fa-receipt me-1"></i>Receipt
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr th:if="${transactions == null or transactions.isEmpty()}">
+                                    <td colspan="8" class="text-center text-secondary py-4 small">No UPI transactions logged yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. SPENDING ANALYTICS PANE -->
+            <div class="tab-pane fade" id="analyticsPane" role="tabpanel">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3 col-6">
+                        <div class="glass-card p-3 text-center">
+                            <span class="x-small text-secondary d-block mb-1">Monthly UPI Spend</span>
+                            <span class="fs-4 fw-bold text-danger" th:text="'₹' + ${analytics != null ? #numbers.formatDecimal(analytics.monthlyUpiSpending, 1, 'COMMA', 2, 'POINT') : '0.00'}">₹0.00</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="glass-card p-3 text-center">
+                            <span class="x-small text-secondary d-block mb-1">Total Received</span>
+                            <span class="fs-4 fw-bold text-success" th:text="'₹' + ${analytics != null ? #numbers.formatDecimal(analytics.totalReceivedAmount, 1, 'COMMA', 2, 'POINT') : '0.00'}">₹0.00</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="glass-card p-3 text-center">
+                            <span class="x-small text-secondary d-block mb-1">Average Tx Amount</span>
+                            <span class="fs-4 fw-bold text-info" th:text="'₹' + ${analytics != null ? #numbers.formatDecimal(analytics.averageTransactionAmount, 1, 'COMMA', 2, 'POINT') : '0.00'}">₹0.00</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="glass-card p-3 text-center">
+                            <span class="x-small text-secondary d-block mb-1">Highest Transaction</span>
+                            <span class="fs-4 fw-bold text-warning" th:text="'₹' + ${analytics != null ? #numbers.formatDecimal(analytics.highestTransactionAmount, 1, 'COMMA', 2, 'POINT') : '0.00'}">₹0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4">
+                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-chart-pie me-2 text-warning"></i>Category-wise UPI Spending</h5>
+                    <div class="row align-items-center">
+                        <div class="col-md-6 text-center">
+                            <canvas id="upiCategoryChart" style="max-height: 280px;"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush bg-transparent">
+                                <li th:each="c : ${analytics != null ? analytics.categoryBreakdown : null}" class="list-group-item bg-transparent text-dark border-secondary border-opacity-10 d-flex justify-content-between align-items-center py-2">
+                                    <span><i class="fa-solid me-2" th:classappend="${c.icon}" th:style="'color:' + ${c.color}"></i><span th:text="${c.displayName}">Food</span></span>
+                                    <span class="fw-bold text-dark" th:text="'₹' + ${#numbers.formatDecimal(c.amount, 1, 'COMMA', 2, 'POINT')} + ' (' + ${#numbers.formatDecimal(c.percentage, 1, 1)} + '%)'">₹0.00</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MODAL 1: SET / CHANGE / RESET UPI PIN -->
+    <div class="modal fade" id="upiPinModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg logout-modal-content">
+                <div class="modal-header border-bottom border-secondary border-opacity-10">
+                    <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-key me-2 text-warning"></i>Set / Change UPI PIN</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <form id="upiPinForm" onsubmit="handlePinSubmit(event)">
+                        <div class="mb-3" id="oldPinGroup">
+                            <label class="form-label-custom">Current UPI PIN (If changing)</label>
+                            <input type="password" id="oldPin" class="form-control form-control-custom" maxlength="6" placeholder="******">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">New 6-Digit UPI PIN</label>
+                            <input type="password" id="newPin" class="form-control form-control-custom" maxlength="6" placeholder="******" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">Confirm New UPI PIN</label>
+                            <input type="password" id="confirmPin" class="form-control form-control-custom" maxlength="6" placeholder="******" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">Account Password (Required for setup/reset)</label>
+                            <input type="password" id="accountPassword" class="form-control form-control-custom" placeholder="Account Password">
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100 py-2.5 font-semibold">
+                            <i class="fa-solid fa-shield-halved me-1"></i>Save UPI PIN
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ENTER UPI PIN BEFORE PAYMENT -->
+    <div class="modal fade" id="enterPinModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg logout-modal-content text-center">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title fw-bold text-white mx-auto"><i class="fa-solid fa-lock me-2 text-warning"></i>Enter 6-Digit UPI PIN</h6>
+                </div>
+                <div class="modal-body py-4">
+                    <p class="x-small text-secondary mb-3">Authorize UPI payment to recipient</p>
+                    <input type="password" id="paymentPinInput" class="form-control form-control-custom text-center fs-4 tracking-widest mb-3" maxlength="6" placeholder="******" autofocus>
+                    <div id="pinAttemptsNotice" class="x-small text-warning mb-3">Remaining attempts: 5/5</div>
+                    <button type="button" class="btn btn-success w-100 font-semibold py-2" onclick="confirmPaymentPin()">
+                        Authorize Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2B: UPI PAYMENT FINAL CONFIRMATION MODAL -->
+    <div class="modal fade" id="upiConfirmSummaryModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg logout-modal-content">
+                <div class="modal-header border-bottom border-secondary border-opacity-10 bg-primary bg-opacity-10">
+                    <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-file-invoice-dollar me-2 text-warning"></i>Confirm Payment & Send</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-start">
+                    <div class="alert alert-success bg-success bg-opacity-10 border-success border-opacity-25 text-success x-small mb-3">
+                        <i class="fa-solid fa-shield-check me-1"></i>Security PIN entered. Please review recipient details and confirm payment.
+                    </div>
+                    <div class="p-3 rounded-3 mb-3 border border-secondary border-opacity-20" style="background: rgba(255, 255, 255, 0.03);">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="x-small text-secondary text-uppercase">Recipient</span>
+                            <span class="fw-bold text-white font-monospace" id="upiSummaryRecipient">--</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="x-small text-secondary text-uppercase">Amount</span>
+                            <span class="fw-bold text-success fs-5">₹<span id="upiSummaryAmount">0.00</span></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="x-small text-secondary text-uppercase">Category</span>
+                            <span class="small text-white" id="upiSummaryCategory">Other</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="x-small text-secondary text-uppercase">Remarks</span>
+                            <span class="x-small text-white-50" id="upiSummaryRemarks">--</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between x-small text-success bg-success bg-opacity-10 p-2.5 rounded border border-success border-opacity-25 mb-1">
+                        <span><i class="fa-solid fa-circle-check me-1"></i>Security PIN Authorization Status:</span>
+                        <strong class="font-monospace">AUTHORIZED</strong>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary-custom btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success btn-sm px-4 fw-bold" onclick="finalSubmitUpiPayment()">
+                        <i class="fa-solid fa-paper-plane me-1"></i>Confirm & Send Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: STEP-UP OTP MODAL FOR HIGH RISK -->
+    <div class="modal fade" id="stepUpOtpModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg logout-modal-content">
+                <div class="modal-header border-bottom border-danger border-opacity-25 bg-danger bg-opacity-10">
+                    <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-shield-cat me-2"></i>High Risk Payment – OTP Step-Up Required</h5>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="alert alert-warning x-small mb-3">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>AI Fraud Monitoring triggered high-risk security check for this transfer. Enter OTP sent to registered mobile. (Demo OTP: <strong>482910</strong> or <strong>123456</strong>)
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label-custom">Verification OTP Code</label>
+                        <input type="text" id="stepUpOtpInput" class="form-control form-control-custom text-center fs-5" placeholder="482910" maxlength="6">
+                    </div>
+                    <button type="button" class="btn btn-danger w-100 font-semibold py-2" onclick="confirmStepUpOtp()">
+                        Verify OTP & Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: PAYMENT RECEIPT MODAL -->
+    <div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg logout-modal-content">
+                <div class="modal-header border-bottom border-secondary border-opacity-10 bg-success bg-opacity-10">
+                    <h5 class="modal-title fw-bold text-success"><i class="fa-solid fa-circle-check me-2"></i>UPI Payment Receipt</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="receiptPrintArea">
+                    <div class="text-center mb-4">
+                        <div class="fw-bold text-white fs-4">SmartBank <span class="text-gradient">AI</span></div>
+                        <span class="x-small text-secondary">Official UPI Transfer Receipt</span>
+                        <div class="fs-2 fw-bold text-success mt-2" id="rcptAmount">₹0.00</div>
+                        <span class="badge bg-success rounded-pill px-3 py-1" id="rcptStatus">SUCCESS</span>
+                    </div>
+
+                    <div class="row g-2 x-small text-secondary mb-3 border-top border-bottom border-secondary border-opacity-10 py-3">
+                        <div class="col-6"><strong>UPI Ref ID:</strong> <span id="rcptUpiRef" class="text-white"></span></div>
+                        <div class="col-6"><strong>Tx Ref ID:</strong> <span id="rcptTxRef" class="text-white"></span></div>
+                        <div class="col-6 mt-2"><strong>Sender:</strong> <span id="rcptSender" class="text-white"></span></div>
+                        <div class="col-6 mt-2"><strong>Receiver:</strong> <span id="rcptReceiver" class="text-white"></span></div>
+                        <div class="col-6 mt-2"><strong>Sender Account:</strong> <span id="rcptSenderAcc" class="text-white"></span></div>
+                        <div class="col-6 mt-2"><strong>Receiver Account:</strong> <span id="rcptReceiverAcc" class="text-white"></span></div>
+                        <div class="col-6 mt-2"><strong>Date & Time:</strong> <span id="rcptTime" class="text-white"></span></div>
+                        <div class="col-6 mt-2"><strong>Risk Level:</strong> <span id="rcptRisk" class="text-white"></span></div>
+                    </div>
+
+                    <div class="x-small text-secondary text-center mb-3" id="rcptRemarks">Remarks: N/A</div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary-custom btn-sm" onclick="window.print()">
+                        <i class="fa-solid fa-print me-1"></i>Print Receipt
+                    </button>
+                    <button type="button" class="btn btn-primary-custom btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: CHANGE UPI ID MODAL -->
+    <div class="modal fade" id="editUpiIdModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg logout-modal-content">
+                <div class="modal-header border-bottom border-secondary border-opacity-10">
+                    <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Change / Register UPI ID</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <form id="editUpiIdForm" onsubmit="handleEditUpiIdSubmit(event)">
+                        <div class="mb-3">
+                            <label class="form-label-custom">New Desired UPI Handle</label>
+                            <input type="text" id="newUpiHandle" class="form-control form-control-custom" placeholder="myname@smartbank" oninput="checkUpiHandleAvailability()" required>
+                            <span id="upiAvailabilityBadge" class="x-small mt-1 d-block"></span>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100 py-2.5 font-semibold">
+                            Save & Update UPI Handle
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <!-- Bootstrap & Chart.js Scripts -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+    
+    <script th:inline="javascript">
+        /* Centralized Frontend Script for UPI Module */
+        const sessionToken = /*[[${sessionToken}]]*/ '';
+        if (sessionToken && sessionToken.length > 10) {
+            localStorage.setItem('token', sessionToken);
+        }
+
+        let activePaymentPayload = null;
+        let pendingPinModal = null;
+        let pendingOtpModal = null;
+
+        function toggleSendMode(mode) {
+            document.getElementById('inputGroupUpiId').classList.add('d-none');
+            document.getElementById('inputGroupPhone').classList.add('d-none');
+            document.getElementById('inputGroupBank').classList.add('d-none');
+
+            if (mode === 'UPI_ID') document.getElementById('inputGroupUpiId').classList.remove('d-none');
+            else if (mode === 'PHONE') document.getElementById('inputGroupPhone').classList.remove('d-none');
+            else if (mode === 'BANK') document.getElementById('inputGroupBank').classList.remove('d-none');
+        }
+
+        async function verifyBeneficiaryUpi() {
+            const upiId = document.getElementById('recipientUpiId').value;
+            if (!upiId) return;
+            const res = await fetch(`/api/upi/check-availability?upiId=${encodeURIComponent(upiId)}`);
+            const data = await res.json();
+            const banner = document.getElementById('beneficiaryBanner');
+            const text = document.getElementById('beneficiaryText');
+            banner.classList.remove('d-none');
+            if (!data.available) {
+                text.innerText = `Beneficiary Found: ${upiId} (Registered Node)`;
+                banner.className = 'alert alert-success bg-success bg-opacity-10 border-success border-opacity-25 text-success small mb-3';
+            } else {
+                text.innerText = `Beneficiary Warning: ${upiId} is not registered on SmartBank AI network.`;
+                banner.className = 'alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 text-warning small mb-3';
+            }
+        }
+
+        function handleUpiSendSubmit(event) {
+            event.preventDefault();
+            const mode = document.querySelector('input[name="sendMode"]:checked').value;
+            const amt = parseFloat(document.getElementById('sendAmount').value);
+            const remarks = document.getElementById('sendRemarks').value;
+            const category = document.getElementById('sendCategory').value;
+
+            activePaymentPayload = {
+                recipientUpiId: mode === 'UPI_ID' ? document.getElementById('recipientUpiId').value : null,
+                recipientPhone: mode === 'PHONE' ? document.getElementById('recipientPhone').value : null,
+                recipientAccountNumber: mode === 'BANK' ? document.getElementById('recipientAccountNumber').value : null,
+                recipientIfscCode: mode === 'BANK' ? document.getElementById('recipientIfscCode').value : null,
+                amount: amt,
+                remarks: remarks,
+                category: category,
+                upiPin: null,
+                otp: null
+            };
+
+            // Prompt for UPI PIN
+            document.getElementById('paymentPinInput').value = '';
+            pendingPinModal = new bootstrap.Modal(document.getElementById('enterPinModal'));
+            pendingPinModal.show();
+        }
+
+        let pendingConfirmModal = null;
+
+        function confirmPaymentPin() {
+            const pin = document.getElementById('paymentPinInput').value;
+            if (!pin || pin.length < 4) {
+                alert('Please enter valid 4 or 6 digit UPI PIN.');
+                return;
+            }
+            activePaymentPayload.upiPin = pin;
+            if (pendingPinModal) pendingPinModal.hide();
+
+            // Populate UPI Confirmation Summary Modal
+            const recipientText = activePaymentPayload.recipientUpiId || activePaymentPayload.recipientPhone || activePaymentPayload.recipientAccountNumber || 'Recipient';
+            document.getElementById('upiSummaryRecipient').innerText = recipientText;
+            document.getElementById('upiSummaryAmount').innerText = parseFloat(activePaymentPayload.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            document.getElementById('upiSummaryCategory').innerText = activePaymentPayload.category || 'OTHER';
+            document.getElementById('upiSummaryRemarks').innerText = activePaymentPayload.remarks || 'UPI Payment';
+
+            pendingConfirmModal = new bootstrap.Modal(document.getElementById('upiConfirmSummaryModal'));
+            pendingConfirmModal.show();
+        }
+
+        async function finalSubmitUpiPayment() {
+            if (pendingConfirmModal) pendingConfirmModal.hide();
+            await executeSendMoneyApi();
+        }
+
+        async function executeSendMoneyApi() {
+            try {
+                const token = /*[[${sessionToken}]]*/ '';
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+
+                const res = await fetch('/api/upi/send', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(activePaymentPayload)
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    showReceiptModal(data);
+                    setTimeout(() => window.location.reload(), 2500);
+                } else if (data.message && data.message.includes('OTP_REQUIRED')) {
+                    // Trigger High-Risk OTP Step-up Modal
+                    pendingOtpModal = new bootstrap.Modal(document.getElementById('stepUpOtpModal'));
+                    pendingOtpModal.show();
+                } else {
+                    alert('Payment Error: ' + (data.message || 'Transaction failed'));
+                }
+            } catch (err) {
+                alert('Connection failure during UPI payment: ' + err.message);
+            }
+        }
+
+        async function confirmStepUpOtp() {
+            const otp = document.getElementById('stepUpOtpInput').value;
+            if (!otp) return;
+            activePaymentPayload.otp = otp;
+            if (pendingOtpModal) pendingOtpModal.hide();
+
+            await executeSendMoneyApi();
+        }
+
+        function showReceiptModal(txData) {
+            document.getElementById('rcptAmount').innerText = '₹' + parseFloat(txData.amount).toFixed(2);
+            document.getElementById('rcptStatus').innerText = txData.status;
+            document.getElementById('rcptUpiRef').innerText = txData.upiReferenceId;
+            document.getElementById('rcptTxRef').innerText = txData.transactionReference;
+            document.getElementById('rcptSender').innerText = txData.senderUpiId;
+            document.getElementById('rcptReceiver').innerText = txData.receiverUpiId;
+            document.getElementById('rcptSenderAcc').innerText = txData.senderAccountNumber || 'N/A';
+            document.getElementById('rcptReceiverAcc').innerText = txData.receiverAccountNumber || 'N/A';
+            document.getElementById('rcptTime').innerText = txData.timestamp || new Date().toLocaleString();
+            document.getElementById('rcptRisk').innerText = (txData.riskScore || 10) + '/100 (' + (txData.riskLevel || 'LOW') + ')';
+            document.getElementById('rcptRemarks').innerText = 'Remarks: ' + (txData.remarks || 'UPI Payment');
+
+            const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+            modal.show();
+        }
+
+        async function viewReceipt(refId) {
+            const res = await fetch(`/api/upi/transactions/${refId}`);
+            const data = await res.json();
+            if (res.ok) {
+                showReceiptModal(data);
+            } else {
+                alert('Receipt unavailable: ' + (data.message || 'Error'));
+            }
+        }
+
+        async function handlePinSubmit(e) {
+            e.preventDefault();
+            const oldPin = document.getElementById('oldPin').value;
+            const newPin = document.getElementById('newPin').value;
+            const confirmPin = document.getElementById('confirmPin').value;
+            const pwd = document.getElementById('accountPassword').value;
+
+            const res = await fetch('/api/upi/pin/set', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldPin: oldPin, pin: newPin, confirmPin: confirmPin, accountPassword: pwd })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('UPI PIN set successfully!');
+                window.location.reload();
+            } else {
+                alert('Failed to set PIN: ' + (data.message || 'Error'));
+            }
+        }
+
+        async function handleUpiRequestSubmit(e) {
+            e.preventDefault();
+            const target = document.getElementById('reqTargetUpiId').value;
+            const amt = document.getElementById('reqAmount').value;
+            const remarks = document.getElementById('reqRemarks').value;
+
+            const res = await fetch('/api/upi/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetUpiId: target, amount: amt, remarks: remarks })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Payment Request sent to ' + target + ' successfully!');
+                window.location.reload();
+            } else {
+                alert('Request failed: ' + (data.message || 'Error'));
+            }
+        }
+
+        function openAcceptRequestModal(id, amt, requesterId) {
+            activePaymentPayload = {
+                recipientUpiId: requesterId,
+                amount: amt,
+                remarks: 'Accepted money request ID #' + id,
+                upiPin: null
+            };
+            document.getElementById('paymentPinInput').value = '';
+            pendingPinModal = new bootstrap.Modal(document.getElementById('enterPinModal'));
+            pendingPinModal.show();
+        }
+
+        async function rejectMoneyRequest(id) {
+            if (!confirm('Reject this payment request?')) return;
+            const res = await fetch(`/api/upi/request/${id}/reject`, { method: 'PUT' });
+            if (res.ok) window.location.reload();
+        }
+
+        async function cancelMoneyRequest(id) {
+            if (!confirm('Cancel this payment request?')) return;
+            const res = await fetch(`/api/upi/request/${id}/cancel`, { method: 'PUT' });
+            if (res.ok) window.location.reload();
+        }
+
+        function openQrModal() {
+            document.getElementById('qr-tab').click();
+        }
+
+        function handleQrFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                document.getElementById('qrTextInput').value = evt.target.result;
+                parseQrData();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function parseQrData() {
+            const content = document.getElementById('qrTextInput').value;
+            if (!content) return;
+            const res = await fetch('/api/upi/qr/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ qrContent: content })
+            });
+            const data = await res.json();
+            if (data.pa) {
+                document.getElementById('qrRecipientId').value = data.pa;
+                if (data.am) document.getElementById('qrPayAmount').value = data.am;
+            } else {
+                document.getElementById('qrRecipientId').value = content;
+            }
+        }
+
+        function handleQrPaySubmit(e) {
+            e.preventDefault();
+            activePaymentPayload = {
+                recipientUpiId: document.getElementById('qrRecipientId').value,
+                amount: parseFloat(document.getElementById('qrPayAmount').value),
+                remarks: document.getElementById('qrPayRemarks').value || 'QR Scan & Pay',
+                upiPin: null
+            };
+            document.getElementById('paymentPinInput').value = '';
+            pendingPinModal = new bootstrap.Modal(document.getElementById('enterPinModal'));
+            pendingPinModal.show();
+        }
+
+        async function checkUpiHandleAvailability() {
+            const handle = document.getElementById('newUpiHandle').value;
+            if (!handle) return;
+            const res = await fetch(`/api/upi/check-availability?upiId=${encodeURIComponent(handle)}`);
+            const data = await res.json();
+            const badge = document.getElementById('upiAvailabilityBadge');
+            if (data.available) {
+                badge.className = 'x-small text-success mt-1 d-block';
+                badge.innerText = '✓ ' + data.upiId + ' is available!';
+            } else {
+                badge.className = 'x-small text-danger mt-1 d-block';
+                badge.innerText = '✗ ' + data.upiId + ' is already taken.';
+            }
+        }
+
+        async function handleEditUpiIdSubmit(e) {
+            e.preventDefault();
+            const handle = document.getElementById('newUpiHandle').value;
+            const res = await fetch('/api/upi/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ upiId: handle })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('UPI ID updated to ' + data.upiId);
+                window.location.reload();
+            } else {
+                alert('Update failed: ' + (data.message || 'Error'));
+            }
+        }
+
+        function filterHistoryTable() {
+            const search = document.getElementById('historySearch').value.toLowerCase();
+            const dir = document.getElementById('historyFilterDirection').value;
+            const rows = document.querySelectorAll('#upiHistoryTable tbody tr');
+
+            rows.forEach(r => {
+                const text = r.innerText.toLowerCase();
+                const directionCell = r.children[2] ? r.children[2].innerText.trim() : '';
+
+                const matchesSearch = text.includes(search);
+                const matchesDir = (dir === 'ALL' || directionCell === dir);
+
+                if (matchesSearch && matchesDir) r.style.display = '';
+                else r.style.display = 'none';
+            });
+        }
+
+        // Render Spending Analytics Chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('upiCategoryChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Food', 'Shopping', 'Bills', 'Travel', 'Entertainment', 'Healthcare', 'Education', 'Other'],
+                        datasets: [{
+                            data: [35, 25, 15, 10, 8, 4, 3, 0],
+                            backgroundColor: ['#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6', '#10b981', '#ef4444', '#6366f1', '#64748b']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

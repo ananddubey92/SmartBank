@@ -1,0 +1,722 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('dashboard')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- System Alerts / Notifications -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Welcome Banner & Security Pill -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">
+                    Welcome, <span th:text="${user.fullName}">Rahul Sharma</span>!
+                </h2>
+                <p class="text-secondary mb-0">SmartBank AI is actively monitoring your accounts with real-time risk intelligence.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{/security}" class="text-decoration-none">
+                    <span th:if="${user.accountSecurityStatus == 'ALERT'}" class="badge px-3 py-2 rounded-pill fs-6 d-inline-flex align-items-center gap-2 border-0 shadow-sm animate-pulse" style="background-color: #dc2626; color: #ffffff !important; font-weight: 600;">
+                        <i class="fa-solid fa-triangle-exclamation text-white"></i>
+                        <span class="text-white">Account Security: <strong class="text-white">ALERT</strong></span>
+                    </span>
+                    <span th:unless="${user.accountSecurityStatus == 'ALERT'}" class="badge px-3 py-2 rounded-pill fs-6 d-inline-flex align-items-center gap-2 border-0 shadow-sm" style="background-color: #16a34a; color: #ffffff !important; font-weight: 600;">
+                        <i class="fa-solid fa-circle-check text-white"></i>
+                        <span class="text-white">Account Security: <strong class="text-white">GOOD</strong></span>
+                    </span>
+                </a>
+                <a th:href="@{/fraud-detection}" class="badge px-3 py-2 rounded-pill fs-6 text-decoration-none d-inline-flex align-items-center gap-2 border shadow-sm" style="background-color: #0f172a; color: #ffffff !important; font-weight: 600; border-color: rgba(163, 230, 53, 0.4) !important;">
+                    <i class="fa-solid fa-shield-halved" style="color: #a3e635;"></i>
+                    <span class="text-white">Risk Score Engine: <strong style="color: #a3e635;">Online</strong></span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Summary Metrics Row (4 Cards) -->
+        <div class="row g-4 mb-4">
+            <!-- 1. Total Balance -->
+            <div class="col-xl-3 col-sm-6">
+                <div class="summary-card hover-glow">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="x-small text-secondary text-uppercase tracking-wider font-semibold">Total Balance</span>
+                        <div class="summary-icon-circle bg-primary bg-opacity-15 text-primary">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-dark mt-2 mb-1">
+                        ₹<span class="account-balance-val counter-value" th:data-acc="${!accounts.isEmpty() ? accounts[0].accountNumber : ''}" th:text="${!accounts.isEmpty() ? #numbers.formatDecimal(accounts[0].balance, 1, 'COMMA', 2, 'POINT') : '0.00'}">1,25,430.50</span>
+                    </h3>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="x-small text-success"><i class="fa-solid fa-shield-check me-1"></i>Available to spend</span>
+                        <span class="x-small text-secondary font-monospace" th:text="${!accounts.isEmpty() ? accounts[0].accountNumber : ''}">1002345678</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Total Deposits (Inflow) -->
+            <div class="col-xl-3 col-sm-6">
+                <div class="summary-card hover-glow">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="x-small text-secondary text-uppercase tracking-wider font-semibold">Total Deposits</span>
+                        <div class="summary-icon-circle bg-success bg-opacity-15 text-success">
+                            <i class="fa-solid fa-arrow-down"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-success mt-2 mb-1">
+                        ₹<span id="statDeposits" th:text="${analytics != null and analytics.totalDeposits != null ? #numbers.formatDecimal(analytics.totalDeposits, 1, 'COMMA', 2, 'POINT') : '0.00'}">65,000.00</span>
+                    </h3>
+                    <span class="x-small text-secondary">Total funds credited into your accounts</span>
+                </div>
+            </div>
+
+            <!-- 3. Total Withdrawals (Outflow) -->
+            <div class="col-xl-3 col-sm-6">
+                <div class="summary-card hover-glow">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="x-small text-secondary text-uppercase tracking-wider font-semibold">Total Withdrawals</span>
+                        <div class="summary-icon-circle bg-danger bg-opacity-15 text-danger">
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-danger mt-2 mb-1">
+                        ₹<span id="statWithdrawals" th:text="${analytics != null and analytics.totalWithdrawals != null ? #numbers.formatDecimal(analytics.totalWithdrawals, 1, 'COMMA', 2, 'POINT') : '0.00'}">12,500.00</span>
+                    </h3>
+                    <span class="x-small text-secondary">ATM cash withdrawals and debits</span>
+                </div>
+            </div>
+
+            <!-- 4. Monthly Spending -->
+            <div class="col-xl-3 col-sm-6">
+                <div class="summary-card hover-glow">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="x-small text-secondary text-uppercase tracking-wider font-semibold">Monthly Spending</span>
+                        <div class="summary-icon-circle bg-warning bg-opacity-15 text-warning">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-warning mt-2 mb-1">
+                        ₹<span th:text="${analytics != null and analytics.currentMonthSpending != null ? #numbers.formatDecimal(analytics.currentMonthSpending, 1, 'COMMA', 2, 'POINT') : '0.00'}">17,000.00</span>
+                    </h3>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="x-small text-secondary" th:text="${analytics != null ? 'Top: ' + analytics.highestCategoryName : 'Categorized'}">Top: Food</span>
+                        <a th:href="@{/analytics}" class="x-small text-primary text-decoration-none fw-semibold">View Insights <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Side: Quick Actions & Account Overview -->
+            <div class="col-xl-8 col-lg-7 col-md-12">
+                <!-- Financial Health & AI Copilot Banner -->
+                <div class="glass-card p-4 mb-4 border border-opacity-10" style="background: linear-gradient(135deg, rgba(163, 230, 53, 0.08) 0%, rgba(15, 23, 42, 0.03) 100%); border-color: rgba(163, 230, 53, 0.25);">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-initials-circle" style="width: 50px; height: 50px; background: rgba(5, 150, 105, 0.15); color: #059669; font-size: 1.3rem;">
+                                <i class="fa-solid fa-heart-pulse"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <h5 class="fw-bold mb-0">Financial Health Score: <span class="text-success" th:text="${health != null ? health.financialHealthScore : 78}">78</span><span class="text-secondary small">/100</span></h5>
+                                    <span class="badge bg-success bg-opacity-20 text-success x-small" th:text="${health != null ? health.healthGrade : 'GOOD'}">GOOD</span>
+                                </div>
+                                <p class="x-small text-secondary mb-0 mt-1" th:text="${health != null and health.intelligentInsights != null and !health.intelligentInsights.isEmpty() ? health.intelligentInsights[0] : 'Your spending is disciplined and within standard baseline parameters.'}">
+                                    Your spending is disciplined and within standard baseline parameters.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a th:href="@{/statement}" class="btn btn-sm btn-outline-warning px-3 py-2 d-flex align-items-center gap-1.5 text-nowrap">
+                                <i class="fa-solid fa-file-invoice-dollar"></i>
+                                <span>Bank Statement</span>
+                            </a>
+                            <a th:href="@{/financial-health}" class="btn btn-sm btn-outline-success px-3 py-2 d-flex align-items-center gap-1.5 text-nowrap">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <span>Health Details</span>
+                            </a>
+                            <a th:href="@{/ai-assistant}" class="btn btn-sm btn-primary-custom px-3 py-2 d-flex align-items-center gap-1.5 text-nowrap">
+                                <i class="fa-solid fa-robot"></i>
+                                <span>AI Assistant</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Card -->
+                <div class="glass-card p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-bolt me-2 text-warning"></i>Quick Actions</h5>
+                        <span class="x-small text-secondary">Instant Banking Operations</span>
+                    </div>
+                    <div class="row text-center g-3">
+                        <div class="col-3">
+                            <a th:href="@{/transfer}" class="text-decoration-none">
+                                <div class="action-btn-circle transfer">
+                                    <i class="fa-solid fa-money-bill-transfer"></i>
+                                </div>
+                                <span class="action-btn-label d-block">Quick Transfer</span>
+                                <span class="x-small text-secondary d-none d-sm-block">AI Monitored</span>
+                            </a>
+                        </div>
+                        <div class="col-3">
+                            <a th:href="@{/deposit}" class="text-decoration-none">
+                                <div class="action-btn-circle deposit">
+                                    <i class="fa-solid fa-circle-down"></i>
+                                </div>
+                                <span class="action-btn-label d-block">Quick Deposit</span>
+                                <span class="x-small text-secondary d-none d-sm-block">Add Funds</span>
+                            </a>
+                        </div>
+                        <div class="col-3">
+                            <a th:href="@{/withdraw}" class="text-decoration-none">
+                                <div class="action-btn-circle withdraw">
+                                    <i class="fa-solid fa-circle-up"></i>
+                                </div>
+                                <span class="action-btn-label d-block">Quick Withdraw</span>
+                                <span class="x-small text-secondary d-none d-sm-block">ATM Cash</span>
+                            </a>
+                        </div>
+                        <div class="col-3">
+                            <a th:href="@{/beneficiaries}" class="text-decoration-none">
+                                <div class="action-btn-circle beneficiaries">
+                                    <i class="fa-solid fa-users"></i>
+                                </div>
+                                <span class="action-btn-label d-block">Beneficiaries</span>
+                                <span class="x-small text-secondary d-none d-sm-block">Verified Nodes</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Overview & Intelligent Spending Distribution -->
+                <div class="spending-breakdown-card p-4">
+                    <!-- Header -->
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-4">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <div class="d-flex align-items-center justify-content-center rounded-3 shadow-sm"
+                                 style="width: 40px; height: 40px; background: rgba(163, 230, 53, 0.16); color: #3f6212; font-size: 1.15rem; border: 1px solid rgba(163, 230, 53, 0.35);">
+                                <i class="fa-solid fa-chart-pie"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark">Monthly Spending Breakdown</h5>
+                                <span class="x-small text-muted">AI-powered classification & budget monitoring</span>
+                            </div>
+                        </div>
+                        <a th:href="@{/analytics}" class="btn btn-sm px-3 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5 font-semibold text-decoration-none shadow-xs"
+                           style="background: #ffffff; color: #0f172a; border: 1px solid rgba(15, 23, 42, 0.12); font-size: 0.78rem; transition: all 0.2s ease;">
+                            <span>Detailed Analytics</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.72rem; color: #65a30d;"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="row align-items-center g-4">
+                        <!-- Chart container with center stats & micro summary -->
+                        <div class="col-md-5 text-center">
+                            <div class="position-relative d-flex align-items-center justify-content-center mx-auto" style="max-width: 215px; height: 215px;">
+                                <canvas id="dashboardSpendingChart" width="215" height="215"></canvas>
+                                
+                                <!-- Center Donut Content -->
+                                <div class="position-absolute text-center d-flex flex-column align-items-center justify-content-center" style="pointer-events: none; width: 140px;">
+                                    <span class="text-uppercase tracking-wider text-muted fw-bold" style="font-size: 0.65rem; letter-spacing: 0.06em;">Total Spent</span>
+                                    <div class="fw-bold text-dark lh-1 my-1" style="font-size: 1.25rem;">
+                                        ₹<span th:text="${#numbers.formatDecimal(analytics != null ? analytics.currentMonthSpending : 0, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                    </div>
+                                    <span class="badge rounded-pill" style="font-size: 0.65rem; background: rgba(163, 230, 53, 0.22); color: #365314; font-weight: 700; padding: 2.5px 8px;">
+                                        <i class="fa-solid fa-calendar-check me-1"></i>This Month
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Micro Trend Summary Pills -->
+                            <div class="d-flex justify-content-center align-items-center gap-3 mt-3 pt-2 border-top" style="border-color: rgba(15, 23, 42, 0.06) !important;">
+                                <div class="text-center px-2">
+                                    <span class="x-small text-muted d-block">Top Category</span>
+                                    <span class="small fw-bold text-dark" th:text="${analytics != null and analytics.highestCategoryName != null ? analytics.highestCategoryName : 'None'}">None</span>
+                                </div>
+                                <div class="vr" style="height: 24px; opacity: 0.15;"></div>
+                                <div class="text-center px-2">
+                                    <span class="x-small text-muted d-block">MoM Trend</span>
+                                    <span class="small fw-bold" th:classappend="${analytics != null and analytics.monthOverMonthDiff != null and analytics.monthOverMonthDiff.doubleValue() > 0 ? 'text-danger' : 'text-success'}"
+                                          th:text="${analytics != null and analytics.monthOverMonthPercent != null ? (analytics.monthOverMonthPercent >= 0 ? '+' : '') + #numbers.formatDecimal(analytics.monthOverMonthPercent, 1, 1) + '%' : '0.0%'}">
+                                        0.0%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category Totals List with modern cards, progress bars & icons -->
+                        <div class="col-md-7">
+                            <div class="d-flex flex-column gap-2" th:if="${analytics != null and !analytics.categoryBreakdown.isEmpty()}">
+                                <div th:each="cat, iterStat : ${analytics.categoryBreakdown}" th:if="${iterStat.index < 4}"
+                                     class="spending-cat-item">
+                                    <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                        <div class="d-flex align-items-center gap-2.5">
+                                            <div class="spending-cat-icon"
+                                                 th:style="'background-color: ' + ${cat.color} + '16; color: ' + ${cat.color} + ';'">
+                                                <i th:class="'fa-solid ' + ${cat.icon != null ? cat.icon : 'fa-receipt'}"></i>
+                                            </div>
+                                            <div>
+                                                <span class="small fw-bold text-dark d-block" style="line-height: 1.2;" th:text="${cat.displayName}">Food</span>
+                                                <span class="x-small text-muted" th:text="${cat.percentage > 0 ? #numbers.formatDecimal(cat.percentage, 1, 1) + '% of monthly budget' : 'No expenses recorded'}">0.0% of monthly budget</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="small fw-bold text-dark d-block">₹<span th:text="${#numbers.formatDecimal(cat.amount, 1, 'COMMA', 2, 'POINT')}">0.00</span></span>
+                                            <span class="badge rounded-pill"
+                                                  th:style="'background-color: ' + ${cat.color} + '18; color: ' + ${cat.color} + '; font-weight: 700; font-size: 0.65rem; padding: 2px 7px;'"
+                                                  th:text="${#numbers.formatDecimal(cat.percentage, 1, 1)} + '%'">0.0%</span>
+                                        </div>
+                                    </div>
+                                    <!-- Dynamic Progress Bar -->
+                                    <div class="spending-progress-track">
+                                        <div class="spending-progress-bar" role="progressbar"
+                                             th:style="'width: ' + (${cat.percentage > 0 ? cat.percentage : (cat.amount > 0 ? 5 : 0)}) + '%; background-color: ' + ${cat.color} + ';'"
+                                             th:aria-valuenow="${cat.percentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- AI Financial Advisor Insight Box -->
+                            <div class="ai-insight-box mt-3">
+                                <div class="d-flex align-items-start gap-2.5">
+                                    <div class="ai-sparkle-icon">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center justify-content-between mb-1">
+                                            <span class="fw-bold" style="font-size: 0.76rem; color: #0f172a; letter-spacing: 0.03em;">
+                                                AI FINANCIAL ADVISOR
+                                            </span>
+                                            <span class="ai-pill-tag">
+                                                <i class="fa-solid fa-bolt text-lime"></i>LIVE INSIGHT
+                                            </span>
+                                        </div>
+                                        <p class="mb-0 text-secondary" style="font-size: 0.77rem; line-height: 1.45;"
+                                           th:text="${analytics != null and !analytics.insights.isEmpty() ? analytics.insights[0] : 'All transactions are monitored and auto-categorized in real time.'}">
+                                            No debit spending recorded for the current month yet. Your full account balance is preserved in savings!
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Debit Card & Recent Transactions -->
+            <div class="col-xl-4 col-lg-5 col-md-12">
+                <!-- ========================================================================= -->
+                <!-- MY DEBIT CARD SECTION                                                    -->
+                <!-- ========================================================================= -->
+                <div class="glass-card p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-credit-card me-2 text-warning"></i>My Debit Card</h5>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <a th:href="@{/debit-card}" class="btn btn-xs btn-outline-warning py-1 px-2.5 rounded-pill x-small fw-semibold text-decoration-none" title="Open Debit Card Separately">
+                                <i class="fa-solid fa-up-right-from-square me-1"></i>Open Card
+                            </a>
+                            <span th:if="${debitCard != null}" id="custCardStatusBadge"
+                                  class="badge rounded-pill px-2.5 py-1 font-semibold"
+                                  th:classappend="${debitCard.status == 'ACTIVE' ? 'bg-success bg-opacity-15 text-success border border-success border-opacity-25' : 'bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25'}"
+                                  th:text="${debitCard.status}">ACTIVE</span>
+                        </div>
+                    </div>
+
+                    <!-- Virtual Card Visual -->
+                    <div th:if="${debitCard != null}" id="custVirtualCardBox"
+                         class="virtual-debit-card mb-3"
+                         style="cursor: pointer;"
+                         onclick="window.location.href='/debit-card'"
+                         title="Click on card to open separately"
+                         th:classappend="${debitCard.status == 'BLOCKED' ? 'card-blocked' : ''}">
+                        <!-- Top Row: Bank Name & Network -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-lime fs-5" style="color: #a3e635;"></i>
+                                <span class="fw-bold tracking-tight text-white small">SmartBank <span style="color: #a3e635;">AI</span></span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-wifi text-light fs-5 fa-rotate-90 opacity-75"></i>
+                                <span class="card-glow-pill" th:text="${debitCard.cardType}">RuPay Platinum</span>
+                            </div>
+                        </div>
+
+                        <!-- Chip & Tag -->
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="card-chip"></div>
+                            <span class="x-small font-monospace text-white-50">DEBIT</span>
+                        </div>
+
+                        <!-- Masked / Full Card Number with Reveal Eye -->
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="card-number-display mb-0" id="custCardNumberText"
+                                 th:data-masked="${debitCard.cardNumber}"
+                                 th:data-raw="${debitCard.formattedCardNumber != null ? debitCard.formattedCardNumber : debitCard.rawCardNumber}"
+                                 th:data-clean-raw="${debitCard.rawCardNumber}"
+                                 th:text="${debitCard.cardNumber}">
+                                **** **** **** 1234
+                            </div>
+                            <div class="d-flex align-items-center gap-1.5" onclick="event.stopPropagation();">
+                                <button type="button" class="card-action-icon-btn" id="dashCardEyeBtn" onclick="toggleDashboardCardNumber(event)" title="Show / Hide Full Card Number">
+                                    <i class="fa-solid fa-eye" id="dashCardEyeIcon"></i>
+                                </button>
+                                <button type="button" class="card-action-icon-btn" id="dashCardCopyBtn" onclick="copyDashboardCardNumber(event)" title="Copy Card Number">
+                                    <i class="fa-solid fa-copy" id="dashCardCopyIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Row: Holder Name & Valid Thru -->
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <span class="x-small text-uppercase tracking-wider text-white-50 d-block" style="font-size: 0.65rem;">Cardholder</span>
+                                <span class="fw-bold text-white small text-uppercase" th:text="${debitCard.cardHolderName}">RAHUL SHARMA</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="x-small text-uppercase tracking-wider text-white-50 d-block" style="font-size: 0.65rem;">Valid Thru</span>
+                                <span class="fw-bold text-white small font-monospace" th:text="${debitCard.expiryDateFormatted}">10/31</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Details & Instant Control Options -->
+                    <div th:if="${debitCard != null}">
+                        <div class="p-2.5 bg-light rounded-3 border mb-3">
+                            <div class="d-flex justify-content-between align-items-center x-small py-1 border-bottom">
+                                <span class="text-secondary"><i class="fa-solid fa-building-columns me-1.5 text-muted"></i>Linked Account:</span>
+                                <span class="font-monospace fw-bold text-dark" th:text="${debitCard.accountNumber}">1002345678</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center x-small py-1 border-bottom">
+                                <span class="text-secondary"><i class="fa-solid fa-money-bill-wave me-1.5 text-muted"></i>ATM Daily Limit:</span>
+                                <span class="fw-bold text-dark">&#8377;<span th:text="${#numbers.formatDecimal(debitCard.dailyWithdrawalLimit, 1, 'COMMA', 0, 'POINT')}">50,000</span></span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center x-small py-1">
+                                <span class="text-secondary"><i class="fa-solid fa-globe me-1.5 text-muted"></i>Online POS Limit:</span>
+                                <span class="fw-bold text-dark">&#8377;<span th:text="${#numbers.formatDecimal(debitCard.dailyOnlineLimit, 1, 'COMMA', 0, 'POINT')}">1,00,000</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Card Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <a th:href="@{/debit-card}" class="btn btn-sm btn-outline-warning w-50 fw-semibold text-center">
+                                <i class="fa-solid fa-expand me-1"></i>Open Full Card
+                            </a>
+                            <button type="button" class="btn btn-sm w-50 fw-semibold"
+                                    id="custCardToggleBtn"
+                                    th:classappend="${debitCard.status == 'ACTIVE' ? 'btn-outline-danger' : 'btn-success'}"
+                                    th:data-card-id="${debitCard.id}"
+                                    th:data-status="${debitCard.status}"
+                                    onclick="handleCustomerCardToggle(this.getAttribute('data-card-id'), this.getAttribute('data-status'))">
+                                <i th:class="${debitCard.status == 'ACTIVE' ? 'fa-solid fa-ban me-1.5' : 'fa-solid fa-check-circle me-1.5'}"></i>
+                                <span id="custCardToggleText" th:text="${debitCard.status == 'ACTIVE' ? 'Block Card' : 'Activate Card'}">Block Card</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Fallback if customer does not have debit card yet -->
+                    <div th:unless="${debitCard != null}" class="text-center py-3 text-secondary">
+                        <i class="fa-solid fa-credit-card fs-1 opacity-25 mb-2"></i>
+                        <p class="small mb-2">No debit card linked to your account.</p>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="requestCustomerCardAutoProvision()">
+                            <i class="fa-solid fa-bolt me-1"></i>Provision My Debit Card
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions Glass Card -->
+                <div class="glass-card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-clock-rotate-left me-2" style="color: #a3e635;"></i>Recent Transactions</h5>
+                        <a th:href="@{/transactions}" class="x-small text-decoration-none fw-semibold" style="color: #4d7c0f;">View All</a>
+                    </div>
+
+                    <!-- Transactions List Stack -->
+                    <div class="d-flex flex-column gap-3" id="dashboardTxBody">
+                        <div th:each="tx, iter : ${transactions}" th:if="${iter.index < 6}"
+                             class="d-flex align-items-center justify-content-between p-2.5 rounded-3 border border-opacity-10 hover-scale-sm"
+                             style="border-color: var(--border-color); background-color: rgba(255,255,255,0.015);">
+                            
+                            <div class="d-flex align-items-center gap-3">
+                                <!-- Category / Type Circle -->
+                                <div class="tx-icon-circle" th:style="'background-color: ' + (${tx.categoryColor != null ? tx.categoryColor + '20' : 'rgba(99, 102, 241, 0.2)'}) + '; color: ' + (${tx.categoryColor != null ? tx.categoryColor : '#6366f1'})">
+                                    <i th:class="'fa-solid ' + (${tx.categoryIcon != null ? tx.categoryIcon : 'fa-receipt'})"></i>
+                                </div>
+                                <div class="text-start" style="max-width: 190px;">
+                                    <h6 class="fw-semibold text-dark mb-0 text-truncate" th:text="${tx.description}" th:title="${tx.description}">Description</h6>
+                                    <div class="d-flex align-items-center gap-1.5 mt-0.5">
+                                        <span class="x-small text-secondary" th:text="${#temporals.format(tx.timestamp, 'dd MMM, HH:mm')}">Today, 10:30</span>
+                                        <span class="badge-risk-pill"
+                                              th:classappend="${tx.riskLevel == 'LOW' ? 'risk-pill-low' : (tx.riskLevel == 'MEDIUM' ? 'risk-pill-medium' : 'risk-pill-high')}"
+                                              th:text="${tx.riskLevel == 'LOW' ? 'LOW RISK' : (tx.riskLevel == 'MEDIUM' ? 'MED RISK' : 'HIGH RISK')}">LOW RISK</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-end">
+                                <div class="fw-bold" th:classappend="${tx.type == 'DEPOSIT' or (tx.type == 'TRANSFER' and accounts[0] != null and tx.destinationAccountNumber == accounts[0].accountNumber) ? 'text-success' : 'text-danger'}">
+                                    <span th:text="${tx.type == 'DEPOSIT' or (tx.type == 'TRANSFER' and accounts[0] != null and tx.destinationAccountNumber == accounts[0].accountNumber) ? '+' : '-'}"></span>₹<span th:text="${#numbers.formatDecimal(tx.amount, 1, 'COMMA', 2, 'POINT')}">2,500.00</span>
+                                </div>
+                                <span th:if="${tx.status == 'SUCCESS'}" class="x-small text-success bg-success bg-opacity-10 px-2 py-0.5 rounded-pill border border-success border-opacity-25">Success</span>
+                                <span th:if="${tx.status == 'BLOCKED'}" class="x-small text-danger bg-danger bg-opacity-10 px-2 py-0.5 rounded-pill border border-danger border-opacity-25 font-semibold">Blocked</span>
+                                <span th:if="${tx.status == 'FAILED'}" class="x-small text-danger bg-danger bg-opacity-10 px-2 py-0.5 rounded-pill border border-danger border-opacity-25">Failed</span>
+                            </div>
+                        </div>
+
+                        <!-- Fallback if empty -->
+                        <div th:if="${#lists.isEmpty(transactions)}" class="text-center text-secondary py-5">
+                            <i class="fa-solid fa-inbox display-6 mb-3 opacity-25"></i>
+                            <p class="small mb-0">No recent transactions logged.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Centralized Footer -->
+    <footer class="text-center py-4 border-top mt-5" style="border-color: rgba(163, 230, 53, 0.20); background-color: #0f172a; color: #94a3b8; margin-left: 260px;">
+        <span class="x-small">© 2026 SmartBank AI – Smart Online Banking & Fraud Detection System. All rights reserved.</span>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Save session token if present on page load -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const serverToken = /*[[${session.token}]]*/ null;
+        if (serverToken) {
+            localStorage.setItem('jwt_token', serverToken);
+        }
+
+        // Initialize Category Spending Doughnut Chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const chartCanvas = document.getElementById('dashboardSpendingChart');
+            if (chartCanvas) {
+                const rawCategoryData = /*[[${analytics != null ? analytics.categoryBreakdown : null}]]*/ [];
+                let labels = [];
+                let data = [];
+                let colors = [];
+                let hasExpenses = false;
+
+                if (rawCategoryData && rawCategoryData.length > 0) {
+                    rawCategoryData.forEach(item => {
+                        if (item.amount > 0) {
+                            hasExpenses = true;
+                            labels.push(item.displayName);
+                            data.push(item.amount);
+                            colors.push(item.color || '#10b981');
+                        }
+                    });
+                }
+
+                // If no spending recorded yet, render a beautiful 4-segment soft ring for core categories
+                if (!hasExpenses || data.length === 0) {
+                    labels = ['Food', 'Shopping', 'Bills', 'Travel'];
+                    data = [25, 25, 25, 25];
+                    colors = [
+                        'rgba(16, 185, 129, 0.40)', // Food - Emerald
+                        'rgba(236, 72, 153, 0.40)', // Shopping - Pink
+                        'rgba(245, 158, 11, 0.40)',  // Bills - Amber
+                        'rgba(6, 182, 212, 0.40)'   // Travel - Cyan
+                    ];
+                }
+
+                new Chart(chartCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors,
+                            borderColor: '#ffffff',
+                            borderWidth: 3,
+                            hoverOffset: 6,
+                            hoverBorderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '72%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: '#0f172a',
+                                titleColor: '#ffffff',
+                                bodyColor: '#a3e635',
+                                borderColor: 'rgba(163, 230, 53, 0.35)',
+                                borderWidth: 1,
+                                padding: 10,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    label: function(context) {
+                                        if (hasExpenses) {
+                                            return ' ' + context.label + ': ₹' + parseFloat(context.raw).toLocaleString('en-IN');
+                                        } else {
+                                            return ' ' + context.label + ': ₹0.00 (Ready to track)';
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true,
+                            duration: 1000
+                        }
+                    }
+                });
+            }
+        });
+
+        async function handleCustomerCardToggle(cardId, currentStatus) {
+            const btn = document.getElementById('custCardToggleBtn');
+            const newStatus = (currentStatus === 'ACTIVE') ? 'BLOCKED' : 'ACTIVE';
+            const confirmMsg = (newStatus === 'BLOCKED')
+                ? 'Are you sure you want to BLOCK your Debit Card? ATM withdrawals and online payments will be blocked immediately.'
+                : 'Are you sure you want to ACTIVATE your Debit Card? Normal transactions will resume immediately.';
+
+            if (!confirm(confirmMsg)) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Updating...';
+
+            try {
+                const token = /*[[${sessionToken}]]*/ '' || localStorage.getItem('token') || '';
+                const authHeader = (token) ? { 'Authorization': 'Bearer ' + token } : {};
+
+                const res = await fetch(`/api/debit-cards/${cardId}/toggle-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeader
+                    }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || 'Status update failed');
+                }
+
+                const updated = await res.json();
+
+                // Update UI elements
+                const badge = document.getElementById('custCardStatusBadge');
+                const cardBox = document.getElementById('custVirtualCardBox');
+
+                if (badge) {
+                    badge.textContent = updated.status;
+                    badge.className = (updated.status === 'ACTIVE')
+                        ? 'badge rounded-pill px-2.5 py-1 font-semibold bg-success bg-opacity-15 text-success border border-success border-opacity-25'
+                        : 'badge rounded-pill px-2.5 py-1 font-semibold bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25';
+                }
+
+                if (cardBox) {
+                    if (updated.status === 'BLOCKED') {
+                        cardBox.classList.add('card-blocked');
+                    } else {
+                        cardBox.classList.remove('card-blocked');
+                    }
+                }
+
+                btn.setAttribute('data-status', updated.status);
+                if (updated.status === 'ACTIVE') {
+                    btn.className = 'btn btn-sm w-100 fw-semibold btn-outline-danger';
+                    btn.innerHTML = '<i class="fa-solid fa-ban me-1.5"></i><span id="custCardToggleText">Block Card</span>';
+                } else {
+                    btn.className = 'btn btn-sm w-100 fw-semibold btn-success';
+                    btn.innerHTML = '<i class="fa-solid fa-check-circle me-1.5"></i><span id="custCardToggleText">Activate Card</span>';
+                }
+
+                alert(`Debit card status updated to: ${updated.status}`);
+
+            } catch (err) {
+                alert('Card status update failed: ' + err.message);
+                window.location.reload();
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function requestCustomerCardAutoProvision() {
+            try {
+                const token = /*[[${sessionToken}]]*/ '' || localStorage.getItem('token') || '';
+                const authHeader = (token) ? { 'Authorization': 'Bearer ' + token } : {};
+                const res = await fetch('/api/debit-cards/my-card', {
+                    headers: authHeader
+                });
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Unable to provision card. Please ensure you have an active account.');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        let isDashCardNumberVisible = false;
+        function toggleDashboardCardNumber(event) {
+            if (event) event.stopPropagation();
+            const textEl = document.getElementById('custCardNumberText');
+            const iconEl = document.getElementById('dashCardEyeIcon');
+            if (!textEl) return;
+
+            const masked = textEl.getAttribute('data-masked') || '**** **** **** 1234';
+            const raw = textEl.getAttribute('data-raw') || masked;
+
+            isDashCardNumberVisible = !isDashCardNumberVisible;
+            if (isDashCardNumberVisible) {
+                textEl.textContent = raw;
+                if (iconEl) {
+                    iconEl.classList.remove('fa-eye');
+                    iconEl.classList.add('fa-eye-slash');
+                }
+            } else {
+                textEl.textContent = masked;
+                if (iconEl) {
+                    iconEl.classList.remove('fa-eye-slash');
+                    iconEl.classList.add('fa-eye');
+                }
+            }
+        }
+
+        function copyDashboardCardNumber(event) {
+            if (event) event.stopPropagation();
+            const textEl = document.getElementById('custCardNumberText');
+            if (!textEl) return;
+
+            const cleanRaw = textEl.getAttribute('data-clean-raw') ||
+                             textEl.getAttribute('data-raw')?.replace(/\s+/g, '') ||
+                             textEl.textContent.replace(/\s+/g, '');
+
+            navigator.clipboard.writeText(cleanRaw).then(() => {
+                const copyIcon = document.getElementById('dashCardCopyIcon');
+                if (copyIcon) {
+                    copyIcon.className = 'fa-solid fa-check text-success';
+                    setTimeout(() => {
+                        copyIcon.className = 'fa-solid fa-copy';
+                    }, 2000);
+                }
+                alert('Debit Card Number copied to clipboard: ' + cleanRaw);
+            }).catch(() => {
+                alert('Debit Card Number: ' + cleanRaw);
+            });
+        }
+        /*]]>*/
+    </script>
+    <script th:src="@{/js/script.js}"></script>
+</body>
+</html>

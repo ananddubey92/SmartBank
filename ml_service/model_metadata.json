@@ -1,0 +1,112 @@
+{
+  "model_name": "SmartBank-AI-RandomForest-v2.0",
+  "algorithm": "RandomForestClassifier with Multi-Vector Feature Scaling",
+  "version": "2.0.0",
+  "training_samples": 5000,
+  "features": [
+    "amount",
+    "avg_amount",
+    "amount_deviation_multiplier",
+    "tx_frequency_10min",
+    "new_beneficiary",
+    "prev_transfers_with_beneficiary",
+    "transaction_hour",
+    "is_overnight_time",
+    "balance_depletion_pct",
+    "account_age_months",
+    "prev_suspicious_count",
+    "failed_login_attempts"
+  ],
+  "feature_stats": {
+    "amount": {
+      "mean": 15957.2714,
+      "std": 27896.0169,
+      "min": 100.91,
+      "max": 149999.3
+    },
+    "avg_amount": {
+      "mean": 6772.6237,
+      "std": 2845.4003,
+      "min": 1500.86,
+      "max": 11997.73
+    },
+    "amount_deviation_multiplier": {
+      "mean": 3.5442,
+      "std": 8.2391,
+      "min": 0.01,
+      "max": 77.4
+    },
+    "tx_frequency_10min": {
+      "mean": 0.5308,
+      "std": 1.079,
+      "min": 0,
+      "max": 5
+    },
+    "new_beneficiary": {
+      "mean": 0.2198,
+      "std": 0.4141,
+      "min": 0,
+      "max": 1
+    },
+    "prev_transfers_with_beneficiary": {
+      "mean": 8.204,
+      "std": 6.7668,
+      "min": 0,
+      "max": 20
+    },
+    "transaction_hour": {
+      "mean": 12.2078,
+      "std": 5.1893,
+      "min": 0,
+      "max": 23
+    },
+    "is_overnight_time": {
+      "mean": 0.074,
+      "std": 0.2618,
+      "min": 0,
+      "max": 1
+    },
+    "balance_depletion_pct": {
+      "mean": 28.7228,
+      "std": 20.9338,
+      "min": 1.0,
+      "max": 98.9
+    },
+    "account_age_months": {
+      "mean": 29.5232,
+      "std": 16.9462,
+      "min": 1,
+      "max": 60
+    },
+    "prev_suspicious_count": {
+      "mean": 0.175,
+      "std": 0.5044,
+      "min": 0,
+      "max": 3
+    },
+    "failed_login_attempts": {
+      "mean": 0.22,
+      "std": 0.5586,
+      "min": 0,
+      "max": 3
+    }
+  },
+  "feature_weights": {
+    "amount_deviation_multiplier": 0.22,
+    "new_beneficiary": 0.18,
+    "balance_depletion_pct": 0.16,
+    "tx_frequency_10min": 0.14,
+    "is_overnight_time": 0.1,
+    "prev_suspicious_count": 0.08,
+    "failed_login_attempts": 0.07,
+    "account_age_months": -0.03,
+    "prev_transfers_with_beneficiary": -0.02
+  },
+  "evaluation": {
+    "accuracy": 0.982,
+    "precision": 0.965,
+    "recall": 0.948,
+    "f1_score": 0.956,
+    "roc_auc": 0.991
+  }
+}

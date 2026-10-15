@@ -1,0 +1,269 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Beneficiary Security Management - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('beneficiaries')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- Alerts -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Section Title -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 x-small">
+                        <i class="fa-solid fa-shield-virus me-1"></i>Smart Recipient Protection
+                    </span>
+                </div>
+                <h3 class="fw-bold text-dark mb-1"><i class="fa-solid fa-users me-2 text-gradient"></i>Beneficiaries Management</h3>
+                <p class="text-secondary mb-0">Register and manage verified recipients. All new beneficiaries undergo 24-hour enhanced AI risk monitoring.</p>
+            </div>
+            <div>
+                <a th:href="@{/transfer}" class="btn btn-primary-custom d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Transfer Money</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Add Beneficiary Form with Security Validation -->
+            <div class="col-lg-5 col-md-12">
+                <div class="glass-card p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="fw-bold text-white mb-0"><i class="fa-solid fa-user-plus me-2 text-gradient"></i>Register Recipient</h5>
+                        <span class="badge bg-secondary-subtle text-white-50 x-small"><i class="fa-solid fa-lock me-1"></i>Encrypted</span>
+                    </div>
+                    <p class="text-secondary small mb-4">Adding a new beneficiary requires visual confirmation. Transfers to recipients registered within 24 hours trigger automated AI verification.</p>
+
+                    <form id="beneficiaryForm" th:action="@{/beneficiaries/create}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label-custom">Beneficiary Full Name</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                                <input type="text" id="benName" name="name" class="form-control form-control-custom" 
+                                       placeholder="e.g. Rahul Sharma" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">Account Number</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-credit-card"></i></span>
+                                <input type="text" id="benAccount" name="accountNumber" class="form-control form-control-custom" 
+                                       placeholder="10-digit account number (e.g. 1002345678)" pattern="[0-9]{8,18}" required>
+                            </div>
+                            <span class="x-small text-secondary">Account will be masked for security during transactions.</span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">IFSC Code</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-building-columns"></i></span>
+                                <input type="text" id="benIfsc" name="ifscCode" class="form-control form-control-custom text-uppercase" 
+                                       placeholder="e.g. SBIN0001234 or HDFC0004567" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label-custom">Bank Name</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-landmark"></i></span>
+                                <input type="text" id="benBank" name="bankName" class="form-control form-control-custom" 
+                                       placeholder="e.g. State Bank of India">
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-3 mb-4" style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2);">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="fa-solid fa-shield-halved text-info mt-1"></i>
+                                <div class="x-small text-secondary">
+                                    <strong class="text-info d-block mb-1">SmartBank Security Protocol:</strong>
+                                    Recipients are stored with confirmation verification. Initial high-value transfers will require two-factor authorization.
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="showBeneficiaryConfirmationModal()" class="btn btn-primary-custom w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+                            <i class="fa-solid fa-shield-check"></i>
+                            <span>Verify &amp; Register Beneficiary</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Beneficiaries List -->
+            <div class="col-lg-7 col-md-12">
+                <div class="glass-card p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <h5 class="fw-bold text-white mb-1"><i class="fa-solid fa-address-book me-2 text-gradient"></i>Saved Recipients</h5>
+                            <span class="x-small text-secondary" th:text="${beneficiaries != null ? beneficiaries.size() : 0} + ' Beneficiaries linked to your account'">0 Beneficiaries linked</span>
+                        </div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 x-small">
+                            <i class="fa-solid fa-lock me-1"></i>Protected Ledger
+                        </span>
+                    </div>
+                    
+                    <div class="list-group list-group-flush scrollable-list" style="max-height: 520px; overflow-y: auto;">
+                        <div th:each="ben : ${beneficiaries}" class="list-group-item bg-transparent border-opacity-10 px-0 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center py-3 gap-3" style="border-color: var(--border-color);">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="avatar-initials-circle flex-shrink-0" style="width: 44px; height: 44px; font-size: 1rem; background: rgba(56, 189, 248, 0.1); color: var(--accent-color); border: 1px solid rgba(56, 189, 248, 0.3);">
+                                    <span th:text="${#strings.substring(ben.name, 0, 1)}">R</span>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                        <h6 class="fw-bold mb-0 text-white" th:text="${ben.name}">Beneficiary Name</h6>
+                                        
+                                        <!-- Novelty / Security badge -->
+                                        <span th:if="${ben.transferCount == null or ben.transferCount == 0}" class="badge bg-warning-subtle text-warning border border-warning-subtle x-small py-0 px-2">
+                                            <i class="fa-solid fa-shield-halved me-1"></i>New Recipient (Protected)
+                                        </span>
+                                        <span th:if="${ben.transferCount != null and ben.transferCount > 0}" class="badge bg-success-subtle text-success border border-success-subtle x-small py-0 px-2">
+                                            <i class="fa-solid fa-circle-check me-1"></i>Verified (<span th:text="${ben.transferCount}"></span> transfers)
+                                        </span>
+                                    </div>
+
+                                    <div class="small text-secondary mb-1">
+                                        <strong class="text-white-50" th:text="${ben.bankName != null ? ben.bankName : 'SmartBank AI'}">Bank Name</strong>
+                                        <span class="mx-1">•</span>
+                                        <!-- Masked Account Number: e.g. **** **** 4521 -->
+                                        <span class="font-monospace text-info" 
+                                              th:text="${ben.accountNumber != null and ben.accountNumber.length() >= 4 ? '**** **** ' + ben.accountNumber.substring(ben.accountNumber.length() - 4) : ben.accountNumber}">
+                                            **** **** 4521
+                                        </span>
+                                    </div>
+                                    <div class="x-small text-secondary">
+                                        <span>IFSC: <span class="text-white-50 text-uppercase" th:text="${ben.ifscCode}">SBIN0001234</span></span>
+                                        <span th:if="${ben.createdAt != null}" class="ms-2">
+                                            • Added: <span class="text-white-50" th:text="${#temporals.format(ben.createdAt, 'dd MMM yyyy')}">01 Jan 2026</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-end align-self-sm-center">
+                                <a th:href="@{/transfer(recipient=${ben.accountNumber})}" class="btn btn-sm btn-outline-info d-flex align-items-center gap-1" title="Initiate Transfer">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    <span class="d-none d-md-inline">Transfer</span>
+                                </a>
+                                <form th:action="@{/beneficiaries/delete/{id}(id=${ben.id})}" method="post" 
+                                      onsubmit="return confirm('Are you sure you want to remove this beneficiary node from your trusted list?');" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Delete Beneficiary">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Fallback if empty -->
+                        <div th:if="${#lists.isEmpty(beneficiaries)}" class="text-center text-secondary py-5">
+                            <div class="mb-3">
+                                <i class="fa-solid fa-user-shield display-6 opacity-25"></i>
+                            </div>
+                            <h6 class="fw-bold text-white mb-1">No Beneficiaries Added</h6>
+                            <p class="small mb-0">Add trusted recipients to initiate instant, fraud-monitored ledger transfers.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Beneficiary Security Confirmation Modal (Masked Account Preview) -->
+    <div class="modal fade" id="beneficiaryConfirmModal" tabindex="-1" aria-labelledby="beneficiaryConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border border-opacity-10 text-white" style="background-color: #0c142c; border-color: rgba(56, 189, 248, 0.3);">
+                <div class="modal-header border-bottom border-opacity-10" style="border-color: var(--border-color);">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="logo-circle" style="width: 36px; height: 36px; font-size: 1rem; background: rgba(56, 189, 248, 0.15); color: var(--accent-color);">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold" id="beneficiaryConfirmModalLabel">Confirm Recipient Registration</h5>
+                            <span class="x-small text-secondary">Anti-Fraud Recipient Validation</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="p-3 rounded-3 mb-3" style="background: rgba(15, 23, 42, 0.03); border: 1px solid var(--border-color);">
+                        <div class="row g-2 small">
+                            <div class="col-5 text-secondary">Recipient Name:</div>
+                            <div class="col-7 fw-bold text-dark" id="modalBenName">--</div>
+                            
+                            <div class="col-5 text-secondary">Masked Account:</div>
+                            <div class="col-7 font-monospace fw-bold text-primary" id="modalBenMaskedAcc">**** **** ----</div>
+
+                            <div class="col-5 text-secondary">Bank Name:</div>
+                            <div class="col-7 text-secondary" id="modalBenBank">--</div>
+
+                            <div class="col-5 text-secondary">IFSC Code:</div>
+                            <div class="col-7 text-uppercase font-monospace text-secondary" id="modalBenIfsc">--</div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded-3 mb-0" style="background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.25);">
+                        <div class="d-flex gap-2">
+                            <i class="fa-solid fa-shield-halved text-warning mt-1"></i>
+                            <div class="x-small text-secondary">
+                                <strong class="text-warning d-block mb-1">AI 24-Hour Enhanced Monitoring:</strong>
+                                This beneficiary will be marked as a <strong>New Recipient</strong>. For your protection, transfers made to this recipient within the first 24 hours will undergo heightened AI risk scrutiny and may require OTP or PIN verification.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-opacity-10" style="border-color: var(--border-color);">
+                    <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="confirmBenBtn" onclick="submitBeneficiaryForm()" class="btn btn-primary-custom d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Confirm &amp; Register</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <script>
+        function showBeneficiaryConfirmationModal() {
+            const form = document.getElementById('beneficiaryForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const name = document.getElementById('benName').value.trim();
+            const account = document.getElementById('benAccount').value.trim();
+            const ifsc = document.getElementById('benIfsc').value.trim().toUpperCase();
+            const bank = document.getElementById('benBank').value.trim() || 'SmartBank AI Partner Network';
+
+            // Mask Account: keep last 4 digits visible e.g. **** **** 4521
+            let masked = '**** **** ' + (account.length >= 4 ? account.slice(-4) : account);
+
+            document.getElementById('modalBenName').textContent = name;
+            document.getElementById('modalBenMaskedAcc').textContent = masked;
+            document.getElementById('modalBenBank').textContent = bank;
+            document.getElementById('modalBenIfsc').textContent = ifsc;
+
+            const modal = new bootstrap.Modal(document.getElementById('beneficiaryConfirmModal'));
+            modal.show();
+        }
+
+        function submitBeneficiaryForm() {
+            document.getElementById('confirmBenBtn').disabled = true;
+            document.getElementById('confirmBenBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering...';
+            document.getElementById('beneficiaryForm').submit();
+        }
+    </script>
+</body>
+</html>

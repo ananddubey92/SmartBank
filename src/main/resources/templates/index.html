@@ -1,0 +1,206 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('SMARTBANK AI - AI-Powered Secure Online Banking & Intelligent Fraud Detection System')}"></head>
+<body class="landing-page pt-5">
+
+    <!-- Header Navigation -->
+    <nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+    <!-- Hero Section -->
+    <header class="container my-5 py-5 animate-fade-in">
+        <div class="row align-items-center g-5 py-4">
+            <div class="col-lg-6">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill">
+                        <i class="fa-solid fa-brain me-2 text-gradient"></i>SMARTBANK AI 2.0
+                    </span>
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill">
+                        <i class="fa-solid fa-shield-virus me-2"></i>Hybrid Fraud Engine
+                    </span>
+                </div>
+                <h1 class="display-4 fw-extrabold mb-3 lh-sm text-white">
+                    SMARTBANK <span class="text-gradient">AI</span>
+                </h1>
+                <p class="fs-5 text-secondary fw-medium mb-3">
+                    AI-Powered Secure Online Banking &amp; Intelligent Fraud Detection System
+                </p>
+                <p class="text-secondary mb-4 lead fs-6">
+                    Experience state-of-the-art digital ledger transactions coupled with an autonomous hybrid AI Fraud Detection engine (Rules + Machine Learning), real-time step-up OTP challenge, Financial Health scoring, spending predictions, and a natural language AI Banking Assistant.
+                </p>
+                
+                <div class="d-flex flex-wrap gap-3 mb-4">
+                    <a th:href="@{/login}" class="btn btn-primary-custom btn-lg d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>Launch Banking Portal</span>
+                    </a>
+                    <a th:href="@{/register}" class="btn btn-secondary-custom btn-lg d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Open Account</span>
+                    </a>
+                </div>
+
+                <!-- Quick Demo Credentials Box -->
+                <div class="p-3 rounded-3" style="background: rgba(15, 23, 42, 0.04); border: 1px solid rgba(163, 230, 53, 0.25); max-width: 480px;">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="fa-solid fa-circle-info text-primary"></i>
+                        <span class="x-small fw-bold text-uppercase tracking-wider" style="color: var(--primary);">Demo Quick Access Accounts:</span>
+                    </div>
+                    <div class="d-flex flex-wrap justify-content-between gap-2 small text-secondary">
+                        <div>User: <strong class="text-dark">rahul</strong> / <span class="font-monospace fw-bold" style="color: #4d7c0f;">Rahul@123</span></div>
+                        <div class="border-start border-opacity-10 ps-2" style="border-color: var(--border-color);">Admin: <strong class="text-dark">admin</strong> / <span class="font-monospace fw-bold" style="color: #4d7c0f;">Admin@123</span></div>
+                        <div class="border-start border-opacity-10 ps-2" style="border-color: var(--border-color);">Super Admin: <strong class="text-dark">superadmin</strong> / <span class="font-monospace text-warning fw-semibold">SuperAdmin@123</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 text-center">
+                <div class="glass-card p-5 position-relative overflow-hidden card-mockup-wrapper">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient opacity-10" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.05) 0%, rgba(163, 230, 53, 0.08) 100%);"></div>
+                    
+                    <!-- Credit Card Mockup -->
+                    <div class="credit-card-mockup mx-auto mb-4 animate-float text-start p-4 d-flex flex-column justify-content-between text-white position-relative">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-shield-halved fs-4" style="color: #a3e635;"></i>
+                                <span class="fw-bold tracking-tight">SmartBank <span style="color: #a3e635;">AI</span></span>
+                            </div>
+                            <span class="badge px-2 py-1 x-small letter-spacing-1" style="background: rgba(163, 230, 53, 0.15); color: #a3e635; border: 1px solid rgba(163, 230, 53, 0.35);">PLATINUM</span>
+                        </div>
+                        <div class="my-3">
+                            <div class="font-monospace fs-5 fw-bold tracking-widest text-shadow mb-1">••••  ••••  ••••  4521</div>
+                            <div class="d-flex justify-content-between align-items-center x-small text-white-50">
+                                <span>AI FRAUD MONITOR: ACTIVE</span>
+                                <span>EXPIRES: 12/29</span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <div class="text-white-50 x-small" style="font-size: 0.65rem;">ACCOUNT HOLDER</div>
+                                <div class="fw-bold tracking-wider" th:text="${#authorization.expression('isAuthenticated()')} ? ${#authentication.name.toUpperCase()} : 'RAHUL SHARMA'">RAHUL SHARMA</div>
+                            </div>
+                            <i class="fa-brands fa-cc-visa fs-2 opacity-75"></i>
+                        </div>
+                    </div>
+
+                    <!-- AI Live Risk Badge Widget -->
+                    <div class="p-3 rounded-3 text-start mb-3" style="background: rgba(15, 23, 42, 0.04); border: 1px solid rgba(163, 230, 53, 0.20);">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="x-small text-secondary fw-semibold">AI HYBRID RISK ENGINE</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle x-small">ONLINE &bull; 0.45 Rules + 0.55 ML</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 6px; background-color: rgba(15, 23, 42, 0.1);">
+                            <div class="progress-bar bg-success rounded-pill" style="width: 15%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between x-small text-secondary">
+                            <span>Last Evaluated: ₹2,500.00 (Food)</span>
+                            <strong class="text-success">Score: 12/100 (LOW - ALLOW)</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-4 text-center">
+                        <div>
+                            <h5 class="fw-bold mb-1 text-gradient">0–100</h5>
+                            <p class="x-small text-secondary mb-0">Hybrid Risk</p>
+                        </div>
+                        <div class="border-start border-opacity-10" style="border-color: var(--border-color); height: 35px;"></div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-gradient">NLP</h5>
+                            <p class="x-small text-secondary mb-0">AI Assistant</p>
+                        </div>
+                        <div class="border-start border-opacity-10" style="border-color: var(--border-color); height: 35px;"></div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-gradient">Instant</h5>
+                            <p class="x-small text-secondary mb-0">OTP Step-up</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 6 Core Pillars Section -->
+    <section id="features" class="py-5" style="background-color: rgba(15, 23, 42, 0.02); border-top: 1px solid rgba(163, 230, 53, 0.18); border-bottom: 1px solid rgba(163, 230, 53, 0.18);">
+        <div class="container my-5">
+            <div class="text-center mb-5">
+                <span class="text-gradient fw-bold text-uppercase tracking-wider small">Intelligent System Capabilities</span>
+                <h2 class="display-5 fw-bold mt-2 text-white">Comprehensive Smart Banking Suite</h2>
+                <p class="text-secondary col-lg-7 mx-auto">Engineered to integrate traditional core ledger operations with autonomous machine learning algorithms for behavioral fraud prevention.</p>
+            </div>
+
+            <div class="row g-4">
+                <!-- 1. AI Fraud Detection & Lab -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="glass-card p-4 h-100 hover-scale">
+                        <div class="d-inline-flex p-3 rounded-3 bg-danger bg-opacity-10 text-danger mb-3">
+                            <i class="fa-solid fa-brain fs-3"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2 text-white">Hybrid Fraud Engine</h4>
+                        <p class="text-secondary small mb-0">Combines multi-vector rule scoring with a machine learning model: <code>Score = round(0.45 × Rules + 0.55 × ML)</code>. Includes a 6-scenario viva demonstration lab.</p>
+                    </div>
+                </div>
+
+                <!-- 2. Step-up Verification -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="glass-card p-4 h-100 hover-scale">
+                        <div class="d-inline-flex p-3 rounded-3 bg-warning bg-opacity-10 text-warning mb-3">
+                            <i class="fa-solid fa-shield-virus fs-3"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2 text-white">Step-up OTP Challenge</h4>
+                        <p class="text-secondary small mb-0">High-risk and critical transfers trigger automated step-up modal verification with dynamic 6-digit OTP codes or customer PIN verification before fund debit.</p>
+                    </div>
+                </div>
+
+                <!-- 3. Financial Health & Spending Prediction -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="glass-card p-4 h-100 hover-scale">
+                        <div class="d-inline-flex p-3 rounded-3 bg-success bg-opacity-10 text-success mb-3">
+                            <i class="fa-solid fa-heart-pulse fs-3"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2 text-white">Financial Health &amp; Forecast</h4>
+                        <p class="text-secondary small mb-0">Calculates a 0–100 health score (Savings, Spending, Risk) along with month-end spending predictions using historical velocity run-rates.</p>
+                    </div>
+                </div>
+
+                <!-- 4. AI Banking Assistant -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="glass-card p-4 h-100 hover-scale">
+                        <div class="d-inline-flex p-3 rounded-3 bg-primary bg-opacity-10 text-primary mb-3">
+                            <i class="fa-solid fa-robot fs-3"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2 text-white">AI Banking Copilot</h4>
+                        <p class="text-secondary small mb-0">Private natural language assistant that answers balance inquiries, explains blocked fraud transactions, and evaluates purchase affordability without cloud data leaks.</p>
+                    </div>
+                </div>
+
+                <!-- 5. Beneficiary Security -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="glass-card p-4 h-100 hover-scale">
+                        <div class="d-inline-flex p-3 rounded-3 bg-info bg-opacity-10 text-info mb-3">
+                            <i class="fa-solid fa-user-shield fs-3"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2 text-white">Protected Beneficiaries</h4>
+                        <p class="text-secondary small mb-0">Recipient registration with visual account confirmation modal and enhanced risk monitoring on all newly linked recipient nodes.</p>
+                    </div>
+                </div>
+
+                <!-- 6. Admin Fraud Monitoring -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="glass-card p-4 h-100 hover-scale">
+                        <div class="d-inline-flex p-3 rounded-3 bg-secondary bg-opacity-10 text-light mb-3">
+                            <i class="fa-solid fa-lock fs-3"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2 text-white">Admin Threat Center</h4>
+                        <p class="text-secondary small mb-0">Comprehensive monitoring console with transaction queues, metrics, account lifecycle controls, and one-click manual BLOCK, REVIEW, and SAFE actions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

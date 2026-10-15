@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Account Details - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('account-details')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- System Alerts / Notifications -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Page Title -->
+        <div class="mb-4">
+            <h3 class="fw-bold text-dark mb-1"><i class="fa-solid fa-address-card me-2 text-gradient"></i>Account Details</h3>
+            <p class="text-secondary mb-0">View all your registered active/inactive core ledger nodes and balances.</p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Linked Accounts Cards Grid -->
+            <div class="col-lg-8">
+                <div class="glass-card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold text-white mb-0"><i class="fa-solid fa-credit-card me-2 text-gradient"></i>My Ledger Nodes</h5>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" th:text="${#lists.size(accounts)} + ' Node(s)'">1 Node</span>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6" th:each="account : ${accounts}">
+                            <div class="credit-card-mockup-dashboard p-4 d-flex flex-column justify-content-between relative overflow-hidden h-100" style="min-height: 200px;">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="badge bg-white bg-opacity-20 text-white mb-2 small" th:text="${account.accountType}">SAVING</span>
+                                        <h4 class="fw-bold mb-1 text-white text-shadow font-monospace" th:text="${account.accountNumber}">1000293021</h4>
+                                        <span class="x-small text-white-50 d-block mt-1">IFSC: <strong class="text-white" th:text="${account.ifscCode}">OBIN0000101</strong></span>
+                                        <div th:if="${account.hasDebitCard}" class="mt-2">
+                                            <span class="badge bg-success bg-opacity-25 text-white border border-success border-opacity-40 font-monospace" style="font-size: 0.72rem;">
+                                                <i class="fa-solid fa-credit-card me-1 text-warning"></i><span th:text="${account.debitCardNumber}">**** 1234</span>
+                                            </span>
+                                            <span class="badge bg-light text-dark x-small ms-1" th:text="${account.debitCardStatus}">ACTIVE</span>
+                                        </div>
+                                    </div>
+                                    <span th:class="${account.status == 'ACTIVE' ? 'badge-active' : 'badge-suspended'}" th:text="${account.status}">ACTIVE</span>
+                                </div>
+                                <div class="mt-4">
+                                    <span class="x-small text-white-50">AVAILABLE BALANCE</span>
+                                    <h3 class="fw-bold text-white mb-0 text-shadow">₹<span class="account-balance-val" th:data-acc="${account.accountNumber}" th:text="${#numbers.formatDecimal(account.balance, 1, 'COMMA', 2, 'POINT')}">5,000.00</span></h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fallback if no accounts -->
+                        <div th:if="${#lists.isEmpty(accounts)}" class="col-12 text-center text-secondary py-5">
+                            <i class="fa-solid fa-inbox display-5 mb-3 opacity-25"></i>
+                            <p class="mb-0">No active accounts registered for this profile.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Governance & Information Sidebar Option -->
+            <div class="col-lg-4">
+                <div sec:authorize="hasAuthority('ROLE_SUPER_ADMIN')" class="glass-card p-4">
+                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-plus-circle text-primary me-2"></i>Issue Secondary Node</h5>
+                    <p class="text-secondary small mb-4">Request a secondary Savings or Current account ledger node instant mapping.</p>
+                    
+                    <form th:action="@{/accounts/create}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label-custom">Select Account Type</label>
+                            <select name="accountType" class="form-select form-control-custom" required>
+                                <option value="SAVING">Savings Account</option>
+                                <option value="CURRENT">Current Account</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2">
+                            <i class="fa-solid fa-plus-circle me-2"></i>Create Account
+                        </button>
+                    </form>
+                </div>
+
+                <div sec:authorize="!hasAuthority('ROLE_SUPER_ADMIN')" class="glass-card p-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="fa-solid fa-building-columns text-warning fs-4"></i>
+                        <h5 class="fw-bold text-white mb-0">Account Governance Policy</h5>
+                    </div>
+                    <p class="text-secondary small mb-3">
+                        New bank account issuance and ledger node creation are strictly managed by **Super Admin / Bank Governance**.
+                    </p>
+                    <div class="p-3 rounded-3 mb-3 border border-secondary border-opacity-25" style="background: rgba(15, 23, 42, 0.4);">
+                        <div class="x-small text-secondary mb-1"><i class="fa-solid fa-shield-halved text-success me-1"></i>Security Policy: <span class="text-white fw-bold">RBAC_ACCOUNT_OPENING</span></div>
+                        <div class="x-small text-secondary"><i class="fa-solid fa-lock text-warning me-1"></i>Issuance Level: <span class="text-warning fw-bold">SUPER ADMIN ONLY</span></div>
+                    </div>
+                    <p class="text-secondary x-small mb-0">
+                        To request an additional savings, current, or FD account node, please contact your Super Administrator or visit your local branch.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Save session token if present on page load -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const sessionToken = /*[[${sessionToken}]]*/ '';
+        if (sessionToken) {
+            localStorage.setItem('token', sessionToken);
+        }
+        /*]]>*/
+    </script>
+    <script th:src="@{/js/script.js}"></script>
+</body>
+</html>

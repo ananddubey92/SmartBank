@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<!-- Head Fragment -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - SmartBank AI'"></title>
+    <!-- Bootstrap 5 CSS & JS Bundle -->
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+    <!-- FontAwesome 6 for Icons (Local) -->
+    <link rel="stylesheet" th:href="@{/css/all.min.css}">
+    <!-- Chart.js for High Performance Banking Analytics -->
+    <script th:src="@{/js/chart.min.js}"></script>
+    <!-- Custom Design CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <!-- Global Notifications Client -->
+    <script th:src="@{/js/notifications-global.js}"></script>
+</head>
+
+<body>
+
+    <!-- Landing Navbar Fragment -->
+    <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark navbar-custom py-3 fixed-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/}">
+                <div class="brand-logo-icon">
+                    <i class="fa-solid fa-shield-halved text-gradient fs-3"></i>
+                </div>
+                <div>
+                    <span class="fw-bold tracking-tight text-white fs-4">SmartBank <span class="text-gradient">AI</span></span>
+                    <span class="d-none d-lg-block x-small text-secondary-custom">Intelligent Fraud Monitoring</span>
+                </div>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center gap-3 mt-3 mt-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="#features">Smart Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#fraud">AI Fraud Core</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#services">Services</a></li>
+                    <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
+                        <a class="btn btn-primary-custom" th:href="@{/dashboard}"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item" th:if="${!#authorization.expression('isAuthenticated()')}">
+                        <a class="btn btn-secondary-custom" th:href="@{/login}">Login</a>
+                    </li>
+                    <li class="nav-item" th:if="${!#authorization.expression('isAuthenticated()')}">
+                        <a class="btn btn-primary-custom" th:href="@{/register}">Open Account</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- Authenticated Page Header & Sidebar Layout -->
+    <!-- Top Header Bar Fragment -->
+    <header th:fragment="header" class="top-header-bar d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn border-0 text-white p-0 fs-4 d-lg-none" id="sidebarToggleBtn" type="button">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <!-- Intelligent Monitoring Live Indicator -->
+            <div class="d-none d-md-flex align-items-center gap-2 px-3 py-1.5 rounded-pill header-engine-pill">
+                <span class="status-pulse-dot"></span>
+                <span class="x-small font-semibold text-white">
+                    <i class="fa-solid fa-shield-virus me-1" style="color: #a3e635;"></i>AI Fraud Detection Engine: <span class="fw-bold" style="color: #a3e635;">Active</span>
+                </span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3 gap-md-4">
+            <!-- Account Security Indicator -->
+            <div th:if="${user != null}" class="d-none d-sm-block">
+                <a th:href="@{/security}" class="text-decoration-none">
+                    <span th:if="${user.accountSecurityStatus == 'ALERT' or (user.failedLoginAttempts != null and user.failedLoginAttempts > 0)}"
+                          class="badge-security-alert animate-pulse">
+                        <i class="fa-solid fa-circle-exclamation"></i>Security: <span class="status-text">Alert</span>
+                    </span>
+                    <span th:unless="${user.accountSecurityStatus == 'ALERT' or (user.failedLoginAttempts != null and user.failedLoginAttempts > 0)}"
+                          class="badge-security-good">
+                        <i class="fa-solid fa-shield-check"></i>Security: <span class="status-text">Good</span>
+                    </span>
+                </a>
+            </div>
+
+            <!-- AI Banking Assistant Shortcut -->
+            <a th:href="@{/ai-assistant}" class="header-icon-btn icon-robot position-relative" title="AI Banking Assistant">
+                <i class="fa-solid fa-robot"></i>
+            </a>
+
+            <!-- Quick Risk Center Shortcut -->
+            <a th:href="@{/fraud-detection}" class="header-icon-btn icon-shield position-relative" title="AI Fraud Detection Monitor">
+                <i class="fa-solid fa-shield-halved"></i>
+            </a>
+
+            <!-- Quick Debit Card Shortcut -->
+            <a th:href="@{/debit-card}" class="header-icon-btn icon-card position-relative" title="My Debit Card (View & Manage Full Card)">
+                <i class="fa-solid fa-credit-card text-warning"></i>
+            </a>
+
+            <!-- Notifications Center Bell with Dropdown & Unread Badge -->
+            <div class="dropdown position-relative">
+                <button type="button" class="header-icon-btn icon-bell position-relative border-0" 
+                        id="notificationBellDropdown" data-bs-toggle="dropdown" aria-expanded="false" 
+                        title="Notification Alerts" onclick="loadGlobalNotificationsDropdown()">
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="headerNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                          style="font-size: 0.65rem; padding: 0.25em 0.5em;"
+                          th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}"
+                          th:text="${unreadNotificationCount}">
+                        0
+                    </span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-0 shadow-lg border-0" aria-labelledby="notificationBellDropdown" style="width: 360px; max-width: 90vw; background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 12px; overflow: hidden; z-index: 1050;">
+                    <div class="d-flex align-items-center justify-content-between p-3 border-bottom" style="border-color: rgba(255,255,255,0.08) !important;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-bell text-warning"></i>
+                            <h6 class="fw-bold text-white mb-0">Notifications</h6>
+                            <span id="dropdownUnreadBadge" class="badge bg-danger rounded-pill x-small"
+                                  th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}"
+                                  th:text="${unreadNotificationCount} + ' unread'">0 unread</span>
+                        </div>
+                        <button type="button" class="btn btn-link btn-sm text-decoration-none text-secondary p-0 x-small" onclick="markAllGlobalNotificationsAsRead(event)">
+                            <i class="fa-solid fa-check-double me-1"></i>Mark all read
+                        </button>
+                    </div>
+                    <div class="notification-dropdown-body p-2" id="globalNotificationDropdownList" style="max-height: 340px; overflow-y: auto;">
+                        <div class="text-center py-4 text-secondary small">
+                            <div class="spinner-border spinner-border-sm text-warning mb-2" role="status"></div>
+                            <p class="mb-0">Loading alerts...</p>
+                        </div>
+                    </div>
+                    <div class="p-2 border-top text-center rounded-bottom" style="border-color: rgba(255,255,255,0.08) !important; background-color: rgba(255,255,255,0.02);">
+                        <a th:href="@{/notifications}" class="x-small fw-semibold text-warning text-decoration-none d-block py-1">
+                            <span>View All Notifications</span> <i class="fa-solid fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Profile Dropdown -->
+            <div class="dropdown position-relative" th:if="${user != null}" id="userProfileDropdownContainer">
+                <button type="button" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle text-white border-0 bg-transparent py-1 px-2 rounded-3 header-profile-link" 
+                        id="userProfileDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" onclick="toggleUserProfileDropdown(event)">
+                    <div class="avatar-initials-circle" style="background: linear-gradient(135deg, #a3e635 0%, #15803d 100%); color: #0f172a; font-weight: 800; border: 1.5px solid rgba(163, 230, 53, 0.4);">
+                        <span th:text="${#strings.arraySplit(user.fullName, ' ')[0].substring(0,1)} + (${#strings.arraySplit(user.fullName, ' ').length > 1} ? ${#strings.arraySplit(user.fullName, ' ')[1].substring(0,1)} : '')">RS</span>
+                    </div>
+                    <div class="d-none d-md-block text-start lh-1">
+                        <div class="fw-bold fs-6 text-white" th:text="${user.fullName}">Rahul Sharma</div>
+                        <span class="x-small fw-semibold mt-1 d-block" style="color: #94a3b8;" th:text="${user.role}">ROLE_CUSTOMER</span>
+                    </div>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end header-profile-dropdown mt-2" id="headerProfileDropdownMenu" aria-labelledby="userProfileDropdownBtn">
+                    <li><a class="dropdown-item" th:href="@{/debit-card}"><span class="menu-icon-wrapper" style="background: rgba(245, 158, 11, 0.16); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);"><i class="fa-solid fa-credit-card"></i></span>My Debit Card</a></li>
+                    <li><a class="dropdown-item" th:href="@{/upi}"><span class="menu-icon-wrapper icon-notifications"><i class="fa-solid fa-qrcode text-warning"></i></span>UPI Payments</a></li>
+                    <li><a class="dropdown-item" th:href="@{/profile}"><span class="menu-icon-wrapper icon-profile"><i class="fa-solid fa-user-gear"></i></span>Profile Settings</a></li>
+                    <li><a class="dropdown-item" th:href="@{/financial-health}"><span class="menu-icon-wrapper icon-health"><i class="fa-solid fa-heart-pulse"></i></span>Financial Health</a></li>
+                    <li><a class="dropdown-item" th:href="@{/ai-assistant}"><span class="menu-icon-wrapper icon-assistant"><i class="fa-solid fa-robot"></i></span>AI Assistant</a></li>
+                    <li><a class="dropdown-item" th:href="@{/notifications}"><span class="menu-icon-wrapper icon-notifications"><i class="fa-solid fa-bell"></i></span>Notifications</a></li>
+                    <li><a class="dropdown-item" th:href="@{/security}"><span class="menu-icon-wrapper icon-security"><i class="fa-solid fa-shield-halved"></i></span>Security Center</a></li>
+                    <li><a class="dropdown-item" th:href="@{/analytics}"><span class="menu-icon-wrapper icon-analytics"><i class="fa-solid fa-chart-pie"></i></span>Expense Analytics</a></li>
+                    <li><hr class="dropdown-divider border-opacity-10"></li>
+                    <li>
+                        <button type="button" class="dropdown-item text-danger border-0 bg-transparent" id="headerDropdownLogoutBtn" onclick="openLogoutModal(event)" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal">
+                            <span class="menu-icon-wrapper icon-logout"><i class="fa-solid fa-right-from-bracket"></i></span>Logout
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <script>
+            function toggleUserProfileDropdown(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                const menu = document.getElementById('headerProfileDropdownMenu');
+                const btn = document.getElementById('userProfileDropdownBtn');
+                if (!menu) return;
+                const isShown = menu.classList.contains('show');
+                document.querySelectorAll('.dropdown-menu.show').forEach(el => {
+                    if (el !== menu) el.classList.remove('show');
+                });
+                if (!isShown) {
+                    menu.classList.add('show');
+                    if (btn) btn.setAttribute('aria-expanded', 'true');
+                } else {
+                    menu.classList.remove('show');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                }
+            }
+            document.addEventListener('click', function(e) {
+                const container = document.getElementById('userProfileDropdownContainer');
+                if (container && !container.contains(e.target)) {
+                    const menu = document.getElementById('headerProfileDropdownMenu');
+                    const btn = document.getElementById('userProfileDropdownBtn');
+                    if (menu) menu.classList.remove('show');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        </script>
+    </header>
+
+    <!-- Fixed Sidebar Navigation Fragment -->
+    <div th:fragment="sidebar(activePage)" class="sidebar-container" id="appSidebar">
+        <!-- Logo Section -->
+        <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-opacity-10" style="border-color: var(--border-color);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-circle">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="lh-sm">
+                    <div class="fw-bold tracking-tight text-white fs-5 leading-none">SmartBank <span class="fw-bold" style="color: #a3e635;">AI</span></div>
+                    <div class="x-small text-uppercase tracking-wider fw-medium" style="color: #94a3b8;">Online Banking</div>
+                </div>
+            </div>
+            <button class="btn btn-sm text-secondary d-lg-none p-0 border-0 fs-5" id="closeSidebarBtn" type="button">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="sidebar-scrollable" style="max-height: calc(100vh - 170px); overflow-y: auto; padding-bottom: 2rem;">
+            <span class="x-small text-uppercase tracking-wider text-secondary px-3 py-1 font-semibold d-block">Core Banking</span>
+            <ul class="nav flex-column gap-1 mb-3">
+                <li class="nav-item">
+                    <a th:href="@{/dashboard}" th:class="${activePage == 'dashboard' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-table-columns me-3"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/account-details}" th:class="${activePage == 'account-details' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-address-card me-3"></i>My Account
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/debit-card}" th:class="${activePage == 'debit-card' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-credit-card me-3 text-warning"></i>My Debit Card
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/upi}" th:class="${activePage == 'upi' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-qrcode me-3 text-warning"></i>UPI Payments
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/transfer}" th:class="${activePage == 'transfer' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-money-bill-transfer me-3"></i>Transfer Money
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/deposit}" th:class="${activePage == 'deposit' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-circle-down me-3"></i>Deposit
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/withdraw}" th:class="${activePage == 'withdraw' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-circle-up me-3"></i>Withdraw
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/beneficiaries}" th:class="${activePage == 'beneficiaries' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-users me-3"></i>Beneficiaries
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/transactions}" th:class="${activePage == 'transactions' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-clock-rotate-left me-3"></i>Transactions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/statement}" th:class="${activePage == 'statement' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-file-invoice-dollar me-3 text-warning"></i>Bank Statement
+                    </a>
+                </li>
+            </ul>
+
+            <span class="x-small text-uppercase tracking-wider text-secondary px-3 py-1 font-semibold d-block">Intelligent Suite</span>
+            <ul class="nav flex-column gap-1">
+                <li class="nav-item">
+                    <a th:href="@{/financial-health}" th:class="${activePage == 'financial-health' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-heart-pulse me-3 text-success"></i>Financial Health
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/ai-assistant}" th:class="${activePage == 'ai-assistant' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-robot me-3 text-primary"></i>AI Assistant
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/notifications}" th:class="${activePage == 'notifications' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <div>
+                                <i class="fa-solid fa-bell me-3 text-warning"></i>Notifications
+                            </div>
+                            <span th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}"
+                                  class="badge bg-danger rounded-pill x-small"
+                                  th:text="${unreadNotificationCount}">3</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/fraud-detection}" th:class="${activePage == 'fraud-detection' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-shield-virus me-3 text-warning"></i>Fraud Detection Lab
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/analytics}" th:class="${activePage == 'analytics' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-chart-pie me-3 text-info"></i>Expense Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/security}" th:class="${activePage == 'security' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-shield-halved me-3 text-success"></i>Security
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/profile}" th:class="${activePage == 'profile' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-user-gear me-3"></i>Profile
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAuthority('ROLE_ADMIN')">
+                    <a th:href="@{/admin}" th:class="${activePage == 'admin' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-screwdriver-wrench me-3 text-danger"></i>Admin Portal
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAuthority('ROLE_SUPER_ADMIN')">
+                    <a th:href="@{/super-admin}" th:class="${activePage == 'super-admin' ? 'nav-link-custom active' : 'nav-link-custom'}">
+                        <i class="fa-solid fa-crown me-3 text-warning"></i>Super Admin
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Logout Section at Bottom -->
+        <div class="sidebar-footer-logout position-absolute bottom-0 start-0 end-0 p-3 border-top border-opacity-10" style="border-color: rgba(255, 255, 255, 0.08); background-color: #090d16;">
+            <button type="button" class="nav-link-custom w-100 border-0 bg-transparent text-start text-danger" id="sidebarFooterLogoutBtn" onclick="openLogoutModal(event)" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal" style="transition: all 0.3s ease;">
+                <i class="fa-solid fa-right-from-bracket me-3 text-danger"></i>Logout
+            </button>
+        </div>
+
+        <!-- Global Logout Modal Fragment Included with Sidebar -->
+        <div th:replace="~{fragments/layout :: logoutModal}"></div>
+    </div>
+
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div class="sidebar-backdrop d-none" id="sidebarBackdrop"></div>
+
+
+    <!-- System Messages / Alerts -->
+    <div th:fragment="alerts" class="w-100">
+        <div th:if="${success}" class="alert alert-success border-0 bg-success bg-opacity-10 text-success small rounded-3 mb-4 animate-fade-in d-flex align-items-center gap-2" role="alert">
+            <i class="fa-solid fa-circle-check fs-5"></i> <span th:text="${success}">Success message</span>
+        </div>
+        <div th:if="${error}" class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger small rounded-3 mb-4 animate-fade-in d-flex align-items-center gap-2" role="alert">
+            <i class="fa-solid fa-circle-exclamation fs-5"></i> <span th:text="${error}">Error message</span>
+        </div>
+    </div>
+
+
+    <!-- Centralized Footer -->
+    <footer th:fragment="footer" class="border-top py-5 mt-5" style="border-color: rgba(163, 230, 53, 0.20); background-color: #0f172a;">
+        <div class="container">
+            <div class="row g-4 justify-content-between text-start mb-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="fa-solid fa-shield-halved fs-3" style="color: #a3e635;"></i>
+                        <span class="fw-bold tracking-tight text-white fs-5">SmartBank AI</span>
+                    </div>
+                    <p class="text-secondary small">
+                        Secure Banking with Intelligent Transaction Monitoring. Real-time algorithmic risk scoring, expense categorization, and proactive fraud prevention.
+                    </p>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                    <h6 class="fw-bold text-white mb-3">Intelligent Core</h6>
+                    <ul class="list-unstyled d-flex flex-column gap-2 small">
+                        <li><a th:href="@{/dashboard}" class="text-secondary text-decoration-none">Dashboard</a></li>
+                        <li><a th:href="@{/transfer}" class="text-secondary text-decoration-none">Risk-Monitored Transfers</a></li>
+                        <li><a th:href="@{/fraud-detection}" class="text-secondary text-decoration-none">Fraud Detection Engine</a></li>
+                        <li><a th:href="@{/analytics}" class="text-secondary text-decoration-none">Expense Analytics</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                    <h6 class="fw-bold text-white mb-3">Developer & Audit</h6>
+                    <ul class="list-unstyled d-flex flex-column gap-2 small">
+                        <li><a href="/h2-console" class="text-secondary text-decoration-none" target="_blank">H2 Ledger Console</a></li>
+                        <li><a href="/api/fraud/metrics" class="text-secondary text-decoration-none" target="_blank">Fraud Metrics API</a></li>
+                        <li><a href="/api/transactions/history/1002345678" class="text-secondary text-decoration-none" target="_blank">Transactions API</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="fw-bold text-white mb-3">Security Architecture</h6>
+                    <p class="text-secondary small mb-2"><i class="fa-solid fa-brain me-2" style="color: #a3e635;"></i>Dynamic AI Risk Assessment (0-100)</p>
+                    <p class="text-secondary small mb-2"><i class="fa-solid fa-shield-halved me-2" style="color: #a3e635;"></i>High-Risk OTP / PIN Verification</p>
+                    <p class="text-secondary small mb-2"><i class="fa-solid fa-key me-2" style="color: #a3e635;"></i>JWT Bearer + Spring Session Security</p>
+                    <p class="text-secondary small"><i class="fa-solid fa-lock me-2" style="color: #a3e635;"></i>BCrypt Hash Encryption & Salt</p>
+                </div>
+            </div>
+            <hr class="border-opacity-10 my-4" style="border-color: var(--border-color);">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                <p class="text-secondary small mb-0">&copy; 2026 SmartBank AI – Smart Online Banking & Fraud Detection System. All rights reserved.</p>
+                <div class="d-flex gap-3">
+                    <a href="#" class="text-secondary"><i class="fa-brands fa-github fs-5"></i></a>
+                    <a href="#" class="text-secondary"><i class="fa-brands fa-linkedin fs-5"></i></a>
+                    <a href="#" class="text-secondary"><i class="fa-brands fa-x-twitter fs-5"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Reusable Logout Confirmation Modal Fragment -->
+    <div th:fragment="logoutModal">
+        <div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+            <div class="modal-dialog modal-dialog-centered modal-sm-custom">
+                <div class="modal-content border-0 shadow-lg logout-modal-content">
+                    <div class="modal-header border-bottom py-3 px-4 logout-modal-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="logout-icon-bubble">
+                                <i class="fa-solid fa-right-from-bracket text-danger"></i>
+                            </div>
+                            <h5 class="modal-title fw-bold m-0 text-dark" id="logoutConfirmModalLabel" style="font-size: 1.15rem;">Confirm Logout</h5>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="window.closeLogoutModal()"></button>
+                    </div>
+                    <div class="modal-body py-4 px-4 text-start logout-modal-body">
+                        <p class="mb-0 text-secondary" style="font-size: 0.95rem; line-height: 1.5;">
+                            Are you sure you want to logout?
+                        </p>
+                    </div>
+                    <div class="modal-footer border-top py-3 px-4 bg-light bg-opacity-50 d-flex justify-content-end gap-2 logout-modal-footer">
+                        <button type="button" class="btn btn-secondary-custom btn-sm px-3 py-2" data-bs-dismiss="modal" id="cancelLogoutBtn" onclick="window.closeLogoutModal()">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm px-3 py-2 d-flex align-items-center gap-2" id="confirmLogoutBtn" onclick="window.handleConfirmLogout()">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden standard Spring Security CSRF-enabled logout form -->
+        <form id="globalLogoutForm" th:action="@{/logout}" method="post" class="d-none">
+        </form>
+
+        <!-- Centralized Logout Confirmation Script -->
+        <script th:src="@{/js/logout-confirm.js}"></script>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,693 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('AI Fraud Detection Lab & Simulator - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('fraud-detection')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- Alerts -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Section Header -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25 px-2.5 py-1 x-small">
+                        <i class="fa-solid fa-brain me-1"></i>Hybrid Rule + ML Ensemble Engine
+                    </span>
+                    <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-25 px-2.5 py-1 x-small">
+                        <i class="fa-solid fa-flask-vial me-1"></i>Viva Demonstration Lab
+                    </span>
+                </div>
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-shield-virus me-2 text-warning"></i>Fraud Detection Lab & Simulator
+                </h3>
+                <p class="text-secondary mb-0">Interactive testing environment for evaluating transaction risk vectors, machine learning probabilities, and step-up challenge triggers.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{/transfer}" class="btn btn-primary-custom d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Execute Transfer</span>
+                </a>
+                <a th:href="@{/security}" class="btn btn-secondary-custom d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-success"></i>
+                    <span>Security Center</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Metric KPI Cards (5 Counters) -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl col-md-4 col-sm-6">
+                <div class="glass-card p-3 h-100">
+                    <span class="text-secondary x-small d-block mb-1">Total Evaluated</span>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="fs-4 fw-bold text-white" th:text="${totalEvaluated}">0</span>
+                        <div class="avatar-initials-circle" style="width: 32px; height: 32px; background: rgba(56, 189, 248, 0.1); color: var(--accent-color);">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <span class="x-small text-secondary">Ledger transactions</span>
+                </div>
+            </div>
+
+            <div class="col-xl col-md-4 col-sm-6">
+                <div class="glass-card p-3 h-100">
+                    <span class="text-secondary x-small d-block mb-1">Low Risk (0–30)</span>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="fs-4 fw-bold text-success" th:text="${lowRiskCount}">0</span>
+                        <div class="avatar-initials-circle" style="width: 32px; height: 32px; background: rgba(34, 197, 94, 0.1); color: #22c55e;">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                    </div>
+                    <span class="x-small text-success">Decision: ALLOW</span>
+                </div>
+            </div>
+
+            <div class="col-xl col-md-4 col-sm-6">
+                <div class="glass-card p-3 h-100">
+                    <span class="text-secondary x-small d-block mb-1">Medium Risk (31–60)</span>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="fs-4 fw-bold text-warning" th:text="${mediumRiskCount}">0</span>
+                        <div class="avatar-initials-circle" style="width: 32px; height: 32px; background: rgba(234, 179, 8, 0.1); color: #eab308;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+                    <span class="x-small text-warning">Decision: REVIEW</span>
+                </div>
+            </div>
+
+            <div class="col-xl col-md-4 col-sm-6">
+                <div class="glass-card p-3 h-100">
+                    <span class="text-secondary x-small d-block mb-1">High / Critical (61–100)</span>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="fs-4 fw-bold text-danger" th:text="${highRiskCount}">0</span>
+                        <div class="avatar-initials-circle" style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                            <i class="fa-solid fa-radiation"></i>
+                        </div>
+                    </div>
+                    <span class="x-small text-danger">Decision: BLOCK / OTP</span>
+                </div>
+            </div>
+
+            <div class="col-xl col-md-4 col-sm-6">
+                <div class="glass-card p-3 h-100">
+                    <span class="text-secondary x-small d-block mb-1">Blocked by AI</span>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="fs-4 fw-bold text-danger" th:text="${blockedCount}">0</span>
+                        <div class="avatar-initials-circle" style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.2); color: #ef4444;">
+                            <i class="fa-solid fa-ban"></i>
+                        </div>
+                    </div>
+                    <span class="x-small text-danger">Step-Up Failed</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Viva Demonstration Scenarios Bar -->
+        <div class="glass-card p-4 mb-4" style="border: 1px solid var(--border-color);">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-flask-vial me-2" style="color: var(--accent-lime);"></i>One-Click Viva Demonstration Scenarios
+                    </h5>
+                    <span class="x-small text-secondary">Click any preset below to load realistic transaction parameters and execute instant hybrid scoring:</span>
+                </div>
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 x-small font-monospace">
+                    Viva Quick Test
+                </span>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-lg-4 col-md-6">
+                    <button type="button" class="btn btn-outline-success w-100 text-start p-2.5 d-flex align-items-center justify-content-between scenario-btn"
+                            onclick="loadScenario(1)">
+                        <div>
+                            <div class="fw-bold text-white small"><i class="fa-solid fa-circle-check text-success me-1.5"></i>1. Normal Everyday Transfer</div>
+                            <div class="x-small text-secondary">₹2,500 • Known Recipient • Daytime (2 PM)</div>
+                        </div>
+                        <span class="badge bg-success bg-opacity-20 text-success x-small">LOW</span>
+                    </button>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <button type="button" class="btn btn-outline-warning w-100 text-start p-2.5 d-flex align-items-center justify-content-between scenario-btn"
+                            onclick="loadScenario(2)">
+                        <div>
+                            <div class="fw-bold text-white small"><i class="fa-solid fa-arrow-trend-up text-warning me-1.5"></i>2. Large Amount Spike (3.6x)</div>
+                            <div class="x-small text-secondary">₹45,000 • Amount Anomaly +40 pts</div>
+                        </div>
+                        <span class="badge bg-warning bg-opacity-20 text-warning x-small">MEDIUM</span>
+                    </button>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <button type="button" class="btn btn-outline-info w-100 text-start p-2.5 d-flex align-items-center justify-content-between scenario-btn"
+                            onclick="loadScenario(3)">
+                        <div>
+                            <div class="fw-bold text-white small"><i class="fa-solid fa-user-clock text-info me-1.5"></i>3. New Beneficiary Novelty</div>
+                            <div class="x-small text-secondary">₹15,000 • Recipient created 1 hr ago (+20 pts)</div>
+                        </div>
+                        <span class="badge bg-info bg-opacity-20 text-info x-small">REVIEW</span>
+                    </button>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <button type="button" class="btn btn-outline-warning w-100 text-start p-2.5 d-flex align-items-center justify-content-between scenario-btn"
+                            onclick="loadScenario(4)">
+                        <div>
+                            <div class="fw-bold text-white small"><i class="fa-solid fa-bolt text-warning me-1.5"></i>4. Rapid Velocity Spike</div>
+                            <div class="x-small text-secondary">₹8,000 • 4 transactions in 10 mins (+25 pts)</div>
+                        </div>
+                        <span class="badge bg-warning bg-opacity-20 text-warning x-small">VELOCITY</span>
+                    </button>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <button type="button" class="btn btn-outline-primary w-100 text-start p-2.5 d-flex align-items-center justify-content-between scenario-btn"
+                            onclick="loadScenario(5)">
+                        <div>
+                            <div class="fw-bold text-white small"><i class="fa-solid fa-moon text-primary me-1.5"></i>5. Midnight Timing Anomaly</div>
+                            <div class="x-small text-secondary">₹18,000 • Hour: 02:45 AM (+15 pts)</div>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-20 text-primary x-small">NIGHT</span>
+                    </button>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <button type="button" class="btn btn-outline-danger w-100 text-start p-2.5 d-flex align-items-center justify-content-between scenario-btn"
+                            onclick="loadScenario(6)">
+                        <div>
+                            <div class="fw-bold text-white small"><i class="fa-solid fa-triangle-exclamation text-danger me-1.5"></i>6. Multi-Vector Fraud Attack</div>
+                            <div class="x-small text-secondary">₹95,000 • 85% Drain + New Recipient + 3 AM</div>
+                        </div>
+                        <span class="badge bg-danger bg-opacity-20 text-danger x-small">CRITICAL</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Simulator & Multi-Vector Engine (2 Columns) -->
+        <div class="row g-4 mb-4">
+            <!-- Simulator Form & Live Results (Left Column) -->
+            <div class="col-lg-6 col-md-12">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="logo-circle" style="width: 36px; height: 36px; font-size: 1rem; background: rgba(56, 189, 248, 0.15); color: var(--accent-color);">
+                                <i class="fa-solid fa-sliders"></i>
+                            </div>
+                            <h5 class="fw-bold text-white mb-0">Custom Parameter Simulator</h5>
+                        </div>
+                        <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 x-small">Live Hybrid Engine</span>
+                    </div>
+                    <p class="text-secondary small mb-4">Adjust risk vectors manually or use the presets above. The engine runs rule evaluation and ML scoring simultaneously.</p>
+
+                    <form id="simulatorForm" onsubmit="executeSimulation(event)">
+                        <div class="row g-3 mb-3">
+                            <div class="col-sm-6">
+                                <label class="form-label-custom">Source Account</label>
+                                <select id="simSource" class="form-select form-control-custom" required>
+                                    <option th:each="acc : ${accounts}" 
+                                            th:value="${acc.accountNumber}" 
+                                            th:text="${acc.accountType} + ' - ' + ${acc.accountNumber} + ' (Bal: ₹' + ${#numbers.formatDecimal(acc.balance, 1, 'COMMA', 2, 'POINT')} + ')'">
+                                        SAVINGS - 1002345678
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label-custom">Target Account / Recipient</label>
+                                <input type="text" id="simDestination" class="form-control form-control-custom" value="2009876543" placeholder="Target Account" required>
+                            </div>
+                        </div>
+
+                            <div class="col-sm-6">
+                                <label class="form-label-custom d-flex justify-content-between">
+                                    <span>Transfer Amount (₹)</span>
+                                    <span class="text-info fw-bold" id="simAmountDisplay"
+                                          th:text="'₹' + ${#numbers.formatDecimal(simAmount != null ? simAmount : 5000, 1, 'COMMA', 0, 'POINT')}">₹5,000</span>
+                                </label>
+                                <input type="number" id="simAmount" class="form-control form-control-custom"
+                                       th:value="${simAmount != null ? simAmount : 5000}"
+                                       value="5000" min="1" step="any" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label-custom">Hour of Day (0–23)</label>
+                                <select id="simHour" class="form-select form-control-custom">
+                                    <option value="14">14:00 (02:00 PM - Daytime)</option>
+                                    <option value="10">10:00 (10:00 AM - Morning)</option>
+                                    <option value="20">20:00 (08:00 PM - Evening)</option>
+                                    <option value="2">02:00 (02:00 AM - Midnight Anomaly)</option>
+                                    <option value="4">04:00 (04:00 AM - Late Night)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-sm-6">
+                                <label class="form-label-custom">Transfers in Last 10 Mins</label>
+                                <input type="number" id="simVelocity" class="form-control form-control-custom" value="0" min="0" max="20">
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label-custom">Recipient Novelty</label>
+                                <select id="simNewBeneficiary" class="form-select form-control-custom">
+                                    <option value="false">Established Recipient (&gt;24h)</option>
+                                    <option value="true">Brand New Recipient (&lt;24h / 0 prior tx)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="simSubmitBtn" class="btn btn-primary-custom w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+                            <i class="fa-solid fa-microchip"></i>
+                            <span id="simSubmitBtnText">Run Hybrid AI Fraud Evaluation</span>
+                        </button>
+                    </form>
+
+                    <!-- Simulation Live Result Panel -->
+                    <div id="simResultPanel" class="mt-4 p-3 rounded-3 d-none" style="background: rgba(15, 23, 42, 0.03); border: 1px solid var(--border-lime-subtle);">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="x-small text-uppercase tracking-wider text-secondary font-semibold">AI Assessment Result</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-secondary-subtle text-primary px-2.5 py-1 x-small" id="simEvaluatedAmountBadge">Simulated: ₹2,500</span>
+                                <span id="simRiskBadge" class="badge px-3 py-1 font-semibold">LOW RISK</span>
+                            </div>
+                        </div>
+
+                        <!-- Hybrid Formula Visualization -->
+                        <div class="p-3 rounded-3 mb-3 border" style="background: #ffffff; border-color: var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-baseline mb-2">
+                                <span class="small fw-bold" style="color: var(--text-primary);">Combined Hybrid Score:</span>
+                                <span class="fs-4 fw-extrabold" id="simFinalScoreText" style="color: #10b981;">12 / 100</span>
+                            </div>
+
+                            <div class="row g-2 text-center x-small mb-2">
+                                <div class="col-6">
+                                    <div class="p-2 rounded-2" style="background: rgba(15, 23, 42, 0.04); border: 1px solid rgba(15, 23, 42, 0.15);">
+                                        <span class="text-secondary d-block">Rule-Based Score (45%)</span>
+                                        <strong class="fs-6" id="simRuleScoreText" style="color: #0f172a;">10</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2 rounded-2" style="background: rgba(163, 230, 53, 0.08); border: 1px solid rgba(163, 230, 53, 0.25);">
+                                        <span class="text-secondary d-block">ML Probability (55%)</span>
+                                        <strong class="fs-6" id="simMlScoreText" style="color: #4d7c0f;">14.0%</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <span class="x-small text-secondary font-monospace d-block text-center">
+                                Formula: round(0.45 × RuleScore + 0.55 × MLScore)
+                            </span>
+                        </div>
+
+                        <!-- Progress Meter Bar -->
+                        <div class="mb-3">
+                            <div class="progress" style="height: 12px; background-color: rgba(255, 255, 255, 0.05); border-radius: 6px;">
+                                <div id="simScoreProgressBar" class="progress-bar rounded-pill" role="progressbar" style="width: 12%;" aria-valuenow="12" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+
+                        <!-- Decision Banner -->
+                        <div class="p-2.5 rounded-2 mb-3" id="simDecisionBox" style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3);">
+                            <div class="d-flex align-items-center gap-2 small">
+                                <i id="simDecisionIcon" class="fa-solid fa-circle-check text-success"></i>
+                                <span id="simDecisionText" class="fw-semibold text-white">Decision: ALLOW • Direct Execution Permitted.</span>
+                            </div>
+                        </div>
+
+                        <!-- Factor Contribution Breakdown -->
+                        <div class="small text-secondary">
+                            <span class="fw-bold text-white-50 d-block mb-1.5"><i class="fa-solid fa-list-check me-1 text-gradient"></i>Triggered Factor Breakdown:</span>
+                            <div id="simFactorBadges" class="d-flex flex-wrap gap-1.5 mb-2"></div>
+                            <ul id="simReasonsList" class="mb-0 ps-3 text-white-50 x-small">
+                                <li>Baseline transactional behavior verified.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multi-Vector Rule Engine Matrix (Right Column) -->
+            <div class="col-lg-6 col-md-12">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="logo-circle" style="width: 36px; height: 36px; font-size: 1rem; background: rgba(56, 189, 248, 0.15); color: var(--accent-color);">
+                                <i class="fa-solid fa-network-wired"></i>
+                            </div>
+                            <h5 class="fw-bold text-white mb-0">Multi-Vector Rule Matrix</h5>
+                        </div>
+                        <span class="badge bg-secondary-subtle text-white-50 x-small">5 Core Vectors</span>
+                    </div>
+                    <p class="text-secondary small mb-3">Deterministic vectors evaluate user behavioral history and accumulate calibrated risk points before ML ensemble blending:</p>
+
+                    <div class="d-flex flex-column gap-2.5">
+                        <!-- Rule 1: Amount Anomaly -->
+                        <div class="p-3 rounded-3" style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="fw-bold text-dark small"><i class="fa-solid fa-arrow-trend-up text-warning me-2"></i>1. Historical Amount Multiplier</span>
+                                <span class="badge bg-warning-subtle text-warning x-small">+25 to +40 Pts</span>
+                            </div>
+                            <p class="x-small text-secondary mb-0">
+                                Evaluates current amount against 30-day historical average. &gt;3× adds <strong>+25 pts</strong>; &gt;5× adds <strong>+40 pts</strong>.
+                            </p>
+                        </div>
+
+                        <!-- Rule 2: Rapid Velocity -->
+                        <div class="p-3 rounded-3" style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="fw-bold text-dark small"><i class="fa-solid fa-bolt text-danger me-2"></i>2. High-Frequency Velocity Spike</span>
+                                <span class="badge bg-danger-subtle text-danger x-small">+25 Pts</span>
+                            </div>
+                            <p class="x-small text-secondary mb-0">
+                                Scans the transaction ledger. &gt;3 transfers initiated from the debit account within 10 minutes triggers velocity penalties.
+                            </p>
+                        </div>
+
+                        <!-- Rule 3: Beneficiary Novelty -->
+                        <div class="p-3 rounded-3" style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="fw-bold text-dark small"><i class="fa-solid fa-user-clock text-info me-2"></i>3. Beneficiary Novelty Window</span>
+                                <span class="badge bg-info-subtle text-info x-small">+20 Pts</span>
+                            </div>
+                            <p class="x-small text-secondary mb-0">
+                                Recipients registered within the last 24 hours or with 0 prior completed transfers trigger novelty step-up checks.
+                            </p>
+                        </div>
+
+                        <!-- Rule 4: Temporal / Overnight Anomaly -->
+                        <div class="p-3 rounded-3" style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="fw-bold text-dark small"><i class="fa-solid fa-moon text-primary me-2"></i>4. Temporal Overnight Anomaly</span>
+                                <span class="badge bg-primary-subtle text-primary x-small">+15 Pts</span>
+                            </div>
+                            <p class="x-small text-secondary mb-0">
+                                Transactions initiated during non-business overnight hours (00:00 AM – 05:00 AM) receive overnight timing flags.
+                            </p>
+                        </div>
+
+                        <!-- Rule 5: Balance Depletion Ratio -->
+                        <div class="p-3 rounded-3" style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="fw-bold text-dark small"><i class="fa-solid fa-battery-empty text-danger me-2"></i>5. Balance Depletion Ratio (&gt;85%)</span>
+                                <span class="badge bg-danger-subtle text-danger x-small">+20 Pts</span>
+                            </div>
+                            <p class="x-small text-secondary mb-0">
+                                Transfers that deplete more than 85% of available account balance in a single execution trigger depletion anomaly warnings.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flagged & Blocked Transactions Audit Log -->
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h5 class="fw-bold text-white mb-1">
+                        <i class="fa-solid fa-shield-virus me-2 text-danger"></i>Suspicious &amp; High-Risk Activity Log
+                    </h5>
+                    <p class="text-secondary small mb-0">Historical transactions audited with risk scores $\ge$ 61 or blocked due to failed step-up verification.</p>
+                </div>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 x-small"
+                      th:text="${flaggedTransactions != null ? flaggedTransactions.size() : 0} + ' Flagged'">0 Flagged</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-custom align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Transaction Ref</th>
+                            <th>Date &amp; Time</th>
+                            <th>Routing</th>
+                            <th>Amount</th>
+                            <th>Risk Score &amp; Level</th>
+                            <th>AI Decision</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="tx : ${flaggedTransactions}">
+                            <td class="font-monospace small text-info fw-bold" th:text="${tx.transactionReference}">TX-123456</td>
+                            <td class="text-secondary small" th:text="${#temporals.format(tx.timestamp, 'dd MMM yyyy, hh:mm a')}">01 Jan 2026, 10:00 AM</td>
+                            <td class="small">
+                                <span class="text-white fw-medium" th:text="${tx.sourceAccountNumber}">1002345678</span>
+                                <span class="text-secondary mx-1">&rarr;</span>
+                                <span class="text-white-50" th:text="${tx.destinationAccountNumber}">1002345679</span>
+                            </td>
+                            <td class="fw-bold text-white" th:text="'₹' + ${#numbers.formatDecimal(tx.amount, 1, 'COMMA', 2, 'POINT')}">₹10,000.00</td>
+                            <td>
+                                <span th:class="${'badge ' + 
+                                    (tx.riskLevel == 'CRITICAL' or tx.riskLevel == 'HIGH' ? 'bg-danger-subtle text-danger border border-danger-subtle' : 
+                                    (tx.riskLevel == 'MEDIUM' ? 'bg-warning-subtle text-warning border border-warning-subtle' : 
+                                    'bg-success-subtle text-success border border-success-subtle'))}">
+                                    <span th:text="${tx.riskScore != null ? tx.riskScore : 0} + '/100 ' + ${tx.riskLevel}">85/100 HIGH</span>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge font-monospace"
+                                      th:classappend="${tx.decision == 'BLOCK' or (tx.riskScore != null and tx.riskScore >= 80) ? 'bg-danger text-white' : (tx.decision == 'REVIEW' or (tx.riskScore != null and tx.riskScore >= 31) ? 'bg-warning text-dark' : 'bg-success text-white')}"
+                                      th:text="${tx.decision != null ? tx.decision : (tx.riskScore != null and tx.riskScore >= 80 ? 'BLOCK' : (tx.riskScore != null and tx.riskScore >= 31 ? 'REVIEW' : 'ALLOW'))}">BLOCK</span>
+                            </td>
+                            <td>
+                                <span th:if="${tx.status == 'BLOCKED'}" class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                    <i class="fa-solid fa-ban me-1"></i>BLOCKED
+                                </span>
+                                <span th:if="${tx.status == 'UNDER_REVIEW'}" class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                    <i class="fa-solid fa-eye me-1"></i>UNDER REVIEW
+                                </span>
+                                <span th:if="${tx.status == 'SUCCESS' or tx.status == 'COMPLETED'}" class="badge bg-success-subtle text-success border border-success-subtle">
+                                    <i class="fa-solid fa-circle-check me-1"></i>VERIFIED
+                                </span>
+                                <span th:if="${tx.status != 'BLOCKED' and tx.status != 'UNDER_REVIEW' and tx.status != 'SUCCESS' and tx.status != 'COMPLETED'}" class="badge bg-secondary-subtle text-white-50" th:text="${tx.status}">
+                                    FAILED
+                                </span>
+                            </td>
+                        </tr>
+
+                        <!-- Empty State -->
+                        <tr th:if="${#lists.isEmpty(flaggedTransactions)}">
+                            <td colspan="7" class="text-center py-5 text-secondary">
+                                <i class="fa-solid fa-shield-check text-success display-6 opacity-50 mb-3 d-block"></i>
+                                <h6 class="fw-bold text-white mb-1">No Suspicious Activity Detected</h6>
+                                <p class="small mb-0">All transactions conducted on your account are within normal baseline behavioral parameters.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Fraud Lab Script -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const sessionToken = /*[[${sessionToken}]]*/ '';
+        if (sessionToken) {
+            localStorage.setItem('token', sessionToken);
+        }
+
+        // Scenario Presets Definitions
+        const scenarios = {
+            1: { amount: 2500, hour: 14, velocity: 0, isNewBen: false, dest: '2009876543' },
+            2: { amount: 45000, hour: 14, velocity: 1, isNewBen: false, dest: '2009876543' },
+            3: { amount: 15000, hour: 11, velocity: 0, isNewBen: true, dest: '5544332211' },
+            4: { amount: 8000, hour: 16, velocity: 4, isNewBen: false, dest: '2009876543' },
+            5: { amount: 18000, hour: 2, velocity: 1, isNewBen: false, dest: '2009876543' },
+            6: { amount: 95000, hour: 2, velocity: 4, isNewBen: true, dest: '9999999999' }
+        };
+
+        function loadScenario(num) {
+            const sc = scenarios[num];
+            if (!sc) return;
+
+            document.getElementById('simAmount').value = sc.amount;
+            document.getElementById('simHour').value = sc.hour;
+            document.getElementById('simVelocity').value = sc.velocity;
+            document.getElementById('simNewBeneficiary').value = sc.isNewBen ? 'true' : 'false';
+            document.getElementById('simDestination').value = sc.dest;
+
+            // Trigger auto simulation
+            document.getElementById('simulatorForm').dispatchEvent(new Event('submit'));
+        }
+
+        async function executeSimulation(e) {
+            e.preventDefault();
+
+            const src = document.getElementById('simSource').value;
+            const dest = document.getElementById('simDestination').value.trim();
+            const amount = parseFloat(document.getElementById('simAmount').value);
+            const hour = parseInt(document.getElementById('simHour').value);
+            const velocity = parseInt(document.getElementById('simVelocity').value);
+            const isNewBen = document.getElementById('simNewBeneficiary').value === 'true';
+
+            if (!src || !dest || isNaN(amount) || amount <= 0) {
+                alert('Please enter valid source, destination, and transfer amount.');
+                return;
+            }
+
+            const btn = document.getElementById('simSubmitBtn');
+            const btnText = document.getElementById('simSubmitBtnText');
+            btn.disabled = true;
+            btnText.textContent = 'Evaluating Hybrid Ensemble...';
+
+            try {
+                const token = localStorage.getItem('token');
+                const payload = {
+                    sourceAccountNumber: src,
+                    destinationAccountNumber: dest,
+                    amount: amount,
+                    hourOfDay: hour,
+                    isNewBeneficiary: isNewBen,
+                    transfersLast10Minutes: velocity,
+                    dailyTransferTotal: amount,
+                    balanceDrainPercent: (amount > 80000) ? 85.0 : 20.0
+                };
+
+                const response = await fetch('/api/fraud/simulate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (sessionToken || token || '')
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Simulation API returned HTTP ' + response.status);
+                }
+
+                const data = await response.json();
+                renderSimulationResult(data, amount);
+
+            } catch (err) {
+                console.error('Simulation error:', err);
+                alert('Simulation failed: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Run Hybrid AI Fraud Evaluation';
+            }
+        }
+
+        function renderSimulationResult(data, amount) {
+            const panel = document.getElementById('simResultPanel');
+            panel.classList.remove('d-none');
+
+            const score = data.riskScore || 0;
+            const level = data.riskLevel || 'LOW';
+            const decision = data.decision || (score >= 81 ? 'BLOCK' : (score >= 61 ? 'REVIEW' : 'ALLOW'));
+
+            // Amount badge
+            document.getElementById('simEvaluatedAmountBadge').textContent = 'Simulated: ₹' + amount.toLocaleString('en-IN');
+
+            // Scores
+            document.getElementById('simFinalScoreText').textContent = score + ' / 100';
+            document.getElementById('simRuleScoreText').textContent = data.ruleBasedScore !== undefined ? data.ruleBasedScore : score;
+            const mlPct = data.mlPredictionScore !== undefined ? (data.mlPredictionScore).toFixed(1) : (score * 1.1).toFixed(1);
+            document.getElementById('simMlScoreText').textContent = mlPct + '%';
+
+            // Progress bar
+            const bar = document.getElementById('simScoreProgressBar');
+            bar.style.width = Math.min(100, Math.max(5, score)) + '%';
+
+            // Badge & Colors
+            const badge = document.getElementById('simRiskBadge');
+            const scoreText = document.getElementById('simFinalScoreText');
+            const decBox = document.getElementById('simDecisionBox');
+            const decIcon = document.getElementById('simDecisionIcon');
+            const decText = document.getElementById('simDecisionText');
+
+            if (score >= 81 || level === 'CRITICAL') {
+                badge.className = 'badge bg-danger text-white px-3 py-1 font-semibold animate-pulse';
+                badge.textContent = 'CRITICAL (BLOCK)';
+                bar.className = 'progress-bar bg-danger rounded-pill';
+                scoreText.style.color = '#ef4444';
+
+                decBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                decBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                decIcon.className = 'fa-solid fa-ban text-danger fs-5';
+                decText.innerHTML = '<strong class="text-danger">Decision: BLOCK</strong> • High confidence fraud probability. Direct execution rejected.';
+
+            } else if (score >= 61 || level === 'HIGH') {
+                badge.className = 'badge bg-danger text-white px-3 py-1 font-semibold';
+                badge.textContent = 'HIGH RISK (OTP CHALLENGE)';
+                bar.className = 'progress-bar bg-danger rounded-pill';
+                scoreText.style.color = '#ef4444';
+
+                decBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                decBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                decIcon.className = 'fa-solid fa-shield-halved text-danger fs-5';
+                decText.innerHTML = '<strong class="text-danger">Decision: OTP CHALLENGE</strong> • Step-up verification (OTP <code>' + (data.simulatedOtp || '482910') + '</code>) required.';
+
+            } else if (score >= 31 || level === 'MEDIUM') {
+                badge.className = 'badge bg-warning text-dark px-3 py-1 font-semibold';
+                badge.textContent = 'MEDIUM RISK (REVIEW)';
+                bar.className = 'progress-bar bg-warning rounded-pill';
+                scoreText.style.color = '#f59e0b';
+
+                decBox.style.background = 'rgba(234, 179, 8, 0.15)';
+                decBox.style.borderColor = 'rgba(234, 179, 8, 0.3)';
+                decIcon.className = 'fa-solid fa-triangle-exclamation text-warning fs-5';
+                decText.innerHTML = '<strong class="text-warning">Decision: REVIEW / ALLOW</strong> • Monitored transaction allowed with audit tracking.';
+
+            } else {
+                badge.className = 'badge bg-success text-white px-3 py-1 font-semibold';
+                badge.textContent = 'LOW RISK (ALLOW)';
+                bar.className = 'progress-bar bg-success rounded-pill';
+                scoreText.style.color = '#10b981';
+
+                decBox.style.background = 'rgba(34, 197, 94, 0.15)';
+                decBox.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+                decIcon.className = 'fa-solid fa-circle-check text-success fs-5';
+                decText.innerHTML = '<strong class="text-success">Decision: ALLOW</strong> • Within baseline behavioral parameters.';
+            }
+
+            // Factor Badges
+            const factorContainer = document.getElementById('simFactorBadges');
+            factorContainer.innerHTML = '';
+            if (data.factorBreakdown && Object.keys(data.factorBreakdown).length > 0) {
+                for (const [k, v] of Object.entries(data.factorBreakdown)) {
+                    if (v > 0) {
+                        const span = document.createElement('span');
+                        span.className = 'badge bg-secondary-subtle text-info border border-secondary-subtle x-small';
+                        span.textContent = k + ': +' + v + ' pts';
+                        factorContainer.appendChild(span);
+                    }
+                }
+            }
+
+            // Reasons List
+            const reasonsList = document.getElementById('simReasonsList');
+            reasonsList.innerHTML = '';
+            if (data.reasons && data.reasons.length > 0) {
+                data.reasons.forEach(r => {
+                    const li = document.createElement('li');
+                    li.textContent = r;
+                    reasonsList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'Baseline transaction velocity and recipient history confirmed.';
+                reasonsList.appendChild(li);
+            }
+
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

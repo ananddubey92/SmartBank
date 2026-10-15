@@ -1,0 +1,317 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Open Account')}"></head>
+<body class="auth-bg p-0 m-0" style="min-height: 100vh; overflow-x: hidden;">
+
+    <div class="register-page animate-fade-in-up">
+        <!-- Right Side: Scrollable Registration Form Panel (Uses clean, normal flow grid spacing) -->
+        <div class="register-form">
+            <div class="register-form-container">
+                
+                <!-- Main Header inside HTML form wrapper -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border: 1px solid rgba(99, 102, 241, 0.25);">
+                            <i class="fa-solid fa-user-plus text-gradient fs-4"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold text-white mb-0">Create Your Account</h3>
+                            <p class="text-secondary small mb-0">Start your journey with SmartBank AI – Secure Banking &amp; Fraud Monitoring</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alert for backend error messages -->
+                <div th:if="${error}" class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger small rounded-3 mb-4 animate-fade-in-up-delay delay-2" role="alert">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i> <span th:text="${error}">An error occurred</span>
+                </div>
+
+                <!-- Client-side error alert -->
+                <div id="validationAlert" class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger small rounded-3 mb-4 d-none" role="alert">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i> <span id="validationMessage">Form contains errors</span>
+                </div>
+
+                <form id="registerForm" th:action="@{/register}" method="post" th:object="${registerRequest}">
+                    
+                    <!-- Hidden DTO integration fields -->
+                    <input type="hidden" id="fatherName" th:field="*{fatherName}">
+                    <input type="hidden" id="motherName" th:field="*{motherName}">
+
+                    <!-- Section 1: Credentials -->
+                    <div class="d-flex align-items-center gap-2 mb-3 mt-2">
+                        <span class="step-num text-gradient fw-bold fs-5">01.</span>
+                        <h6 class="fw-bold text-white mb-0">System Security Credentials</h6>
+                    </div>
+                    <div class="form-grid mb-4">
+                        <!-- Username -->
+                        <div class="field-group">
+                            <label for="username" class="form-label-custom">Username</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                                <input type="text" id="username" th:field="*{username}" class="form-control form-control-custom" placeholder="Enter username" required minlength="4" maxlength="20">
+                            </div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Username error</div>
+                        </div>
+                        <!-- Email -->
+                        <div class="field-group">
+                            <label for="email" class="form-label-custom">Email Address</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                                <input type="email" id="email" th:field="*{email}" class="form-control form-control-custom" placeholder="Enter email address" required>
+                            </div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Email error</div>
+                        </div>
+                        <!-- Password -->
+                        <div class="field-group">
+                            <label for="password" class="form-label-custom">Password</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                                <input type="password" id="password" th:field="*{password}" class="form-control form-control-custom" placeholder="Create password" required minlength="6">
+                                <button class="input-group-text text-secondary pe-3" type="button" id="togglePassword">
+                                    <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                                </button>
+                            </div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Password error</div>
+                        </div>
+                        <!-- Confirm Password -->
+                        <div class="field-group">
+                            <label for="confirmPassword" class="form-label-custom">Confirm Password</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                                <input type="password" id="confirmPassword" class="form-control form-control-custom" placeholder="Confirm password" required>
+                                <button class="input-group-text text-secondary pe-3" type="button" id="toggleConfirmPassword">
+                                    <i class="fa-solid fa-eye" id="confirmEyeIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Personal Profile -->
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="step-num text-gradient fw-bold fs-5">02.</span>
+                        <h6 class="fw-bold text-white mb-0">Personal Demographics</h6>
+                    </div>
+                    <div class="form-grid mb-4">
+                        <!-- Full Name -->
+                        <div class="field-group">
+                            <label for="fullName" class="form-label-custom">Full Name</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-circle-user"></i></span>
+                                <input type="text" id="fullName" th:field="*{fullName}" class="form-control form-control-custom" placeholder="Enter your full name" required>
+                            </div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">Full name error</div>
+                        </div>
+                        <!-- Mobile -->
+                        <div class="field-group">
+                            <label for="phone" class="form-label-custom">Mobile Number</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
+                                <input type="tel" id="phone" th:field="*{phone}" class="form-control form-control-custom" placeholder="Enter mobile number" required pattern="^[0-9]{10}$">
+                            </div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">Phone error</div>
+                        </div>
+                        <!-- DOB -->
+                        <div class="field-group">
+                            <label for="dob" class="form-label-custom">Date of Birth</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-calendar-days"></i></span>
+                                <input type="date" id="dob" th:field="*{dob}" class="form-control form-control-custom" required>
+                            </div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('dob')}" th:errors="*{dob}">DOB error</div>
+                        </div>
+                        <!-- Gender -->
+                        <div class="field-group">
+                            <label for="gender" class="form-label-custom">Gender</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-venus-mars"></i></span>
+                                <select id="gender" th:field="*{gender}" class="form-select form-control-custom" required>
+                                    <option value="" disabled selected>Select gender</option>
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                    <option value="OTHERS">Others</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Identity & Address -->
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="step-num text-gradient fw-bold fs-5">03.</span>
+                        <h6 class="fw-bold text-white mb-0">Identity Proof & Verification (KYC)</h6>
+                    </div>
+                    <div class="form-grid mb-4">
+                        <!-- Aadhaar -->
+                        <div class="field-group">
+                            <label for="aadhar" class="form-label-custom">Aadhaar Number</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-id-card"></i></span>
+                                <input type="text" id="aadhar" th:field="*{aadhar}" class="form-control form-control-custom" placeholder="Enter aadhaar number" required pattern="^[0-9]{12}$">
+                            </div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('aadhar')}" th:errors="*{aadhar}">Aadhar error</div>
+                        </div>
+                        <!-- PAN -->
+                        <div class="field-group">
+                            <label for="pan" class="form-label-custom">PAN Number</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-address-card"></i></span>
+                                <input type="text" id="pan" th:field="*{pan}" class="form-control form-control-custom text-uppercase" placeholder="Enter PAN number" required pattern="^[A-Z]{5}[0-9]{4}[A-Z]{1}$">
+                            </div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('pan')}" th:errors="*{pan}">PAN error</div>
+                        </div>
+                        <!-- Address -->
+                        <div class="field-group full-width">
+                            <label for="address" class="form-label-custom">Permanent Address</label>
+                            <div class="input-group-custom address-group">
+                                <span class="input-group-text pt-2"><i class="fa-solid fa-location-dot"></i></span>
+                                <textarea id="address" th:field="*{address}" class="form-control form-control-custom" rows="2" placeholder="Enter your full address" required style="resize: none;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Bank Account Details -->
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="step-num text-gradient fw-bold fs-5">04.</span>
+                        <h6 class="fw-bold text-white mb-0">Initial Account Configuration</h6>
+                    </div>
+                    <div class="form-grid mb-4">
+                        <!-- Account Type -->
+                        <div class="field-group">
+                            <label for="accountType" class="form-label-custom">Account Type</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text"><i class="fa-solid fa-wallet"></i></span>
+                                <select id="accountType" th:field="*{accountType}" class="form-select form-control-custom" required>
+                                    <option value="" disabled selected>Select account type</option>
+                                    <option value="SAVING">Savings Account (OBIN0000101)</option>
+                                    <option value="CURRENT">Current Account (OBIN0000101)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Initial Deposit -->
+                        <div class="field-group">
+                            <label for="initialBalance" class="form-label-custom">Initial Deposit (INR)</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" id="initialBalance" th:field="*{initialBalance}" class="form-control form-control-custom" placeholder="Enter initial deposit" min="0" step="any">
+                            </div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('initialBalance')}" th:errors="*{initialBalance}">Initial balance error</div>
+                        </div>
+                        <!-- Terms Checkbox -->
+                        <div class="field-group full-width mt-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="checkbox" id="terms" class="form-check-input" style="background-color: #ffffff; border-color: var(--border-color); cursor: pointer;" required>
+                                <label for="terms" class="form-label-custom mb-0" style="cursor: pointer; color: var(--text-primary);">I agree to the <a href="#" class="text-gradient text-decoration-none fw-semibold">Terms of Service</a> and <a href="#" class="text-gradient text-decoration-none fw-semibold">Privacy Policy</a></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn btn-primary-custom w-100 py-3 mb-3 d-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span id="btnText">Create Account</span>
+                        <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p class="small text-secondary mb-3">Already have an account? 
+                        <a th:href="@{/login}" class="text-white fw-semibold text-decoration-none text-gradient">Sign in</a>
+                    </p>
+                    <a th:href="@{/}" class="small text-secondary text-decoration-none"><i class="fa-solid fa-arrow-left me-2"></i>Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Page Specific Script for registration checks -->
+    <script>
+        // Password Visibility Toggle
+        const togglePassword = document.querySelector('#togglePassword');
+        const passwordInput = document.querySelector('#password');
+        const eyeIcon = document.querySelector('#eyeIcon');
+
+        togglePassword.addEventListener('click', function (e) {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            eyeIcon.classList.toggle('fa-eye');
+            eyeIcon.classList.toggle('fa-eye-slash');
+        });
+
+        // Confirm Password Visibility Toggle
+        const toggleConfirmPassword = document.querySelector('#toggleConfirmPassword');
+        const confirmPasswordInput = document.querySelector('#confirmPassword');
+        const confirmEyeIcon = document.querySelector('#confirmEyeIcon');
+
+        toggleConfirmPassword.addEventListener('click', function (e) {
+            const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            confirmPasswordInput.setAttribute('type', type);
+            confirmEyeIcon.classList.toggle('fa-eye');
+            confirmEyeIcon.classList.toggle('fa-eye-slash');
+        });
+
+        // Form Submit spinner hook
+        const registerForm = document.getElementById('registerForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const validationAlert = document.getElementById('validationAlert');
+        const validationMessage = document.getElementById('validationMessage');
+
+        registerForm.addEventListener('submit', function(e) {
+            validationAlert.classList.add('d-none');
+            
+            // Client side checks
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const pan = document.getElementById('pan').value.toUpperCase();
+            const aadhar = document.getElementById('aadhar').value;
+            const phone = document.getElementById('phone').value;
+
+            // Password match check
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                validationMessage.textContent = "Passwords do not match. Please verify your password fields.";
+                validationAlert.classList.remove('d-none');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // PAN check: 5 alphabets, 4 digits, 1 alphabet
+            const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+            if (!panRegex.test(pan)) {
+                e.preventDefault();
+                validationMessage.textContent = "Invalid PAN Card format. Must match standard format (e.g., ABCDE1234F).";
+                validationAlert.classList.remove('d-none');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // Aadhar check: 12 digits
+            const aadharRegex = /^[0-9]{12}$/;
+            if (!aadharRegex.test(aadhar)) {
+                e.preventDefault();
+                validationMessage.textContent = "Aadhar Number must be exactly 12 numeric digits.";
+                validationAlert.classList.remove('d-none');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // Phone check: 10 digits
+            const phoneRegex = /^[0-9]{10}$/;
+            if (!phoneRegex.test(phone)) {
+                e.preventDefault();
+                validationMessage.textContent = "Phone Number must be exactly 10 numeric digits.";
+                validationAlert.classList.remove('d-none');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // Show submit spinner
+            submitBtn.disabled = true;
+            btnText.textContent = "Processing KYC Enrollment...";
+            btnSpinner.classList.remove('d-none');
+        });
+    </script>
+</body>
+</html>

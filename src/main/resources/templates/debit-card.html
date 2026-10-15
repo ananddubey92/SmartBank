@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Debit Card - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('debit-card')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- System Alerts -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Section Header -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-credit-card me-2 text-warning"></i>My Debit Card
+                </h3>
+                <p class="text-secondary mb-0">Inspect your virtual debit card separately, reveal full 16-digit card number & CVV, and manage card security.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2" th:if="${debitCard != null}">
+                <span id="pageCardStatusBadge"
+                      class="badge rounded-pill px-3 py-1.5 font-semibold fs-6"
+                      th:classappend="${debitCard.status == 'ACTIVE' ? 'bg-success bg-opacity-20 text-success border border-success border-opacity-25' : 'bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25'}">
+                    <i th:class="${debitCard.status == 'ACTIVE' ? 'fa-solid fa-circle-check me-1.5' : 'fa-solid fa-ban me-1.5'}"></i>
+                    <span id="pageCardStatusText" th:text="${debitCard.status}">ACTIVE</span>
+                </span>
+                <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25 px-3 py-1.5 rounded-pill small">
+                    <i class="fa-solid fa-shield-halved me-1"></i>Protected by SmartBank AI
+                </span>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="row g-4 mb-4" th:if="${debitCard != null}">
+            <!-- Left Column: Interactive 3D Card & Toolbar -->
+            <div class="col-xl-6 col-lg-7 col-md-12">
+                <div class="glass-card p-4 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="x-small text-uppercase tracking-wider text-secondary font-semibold">
+                                <i class="fa-solid fa-layer-group me-1.5 text-warning"></i>3D Virtual Card Viewer
+                            </span>
+                            <span class="x-small text-muted">
+                                <i class="fa-solid fa-arrows-rotate me-1"></i>Click card or button below to flip
+                            </span>
+                        </div>
+
+                        <!-- 3D Flip Card Container -->
+                        <div class="card-3d-wrapper mb-4">
+                            <div class="card-3d-inner" id="card3DInner" onclick="flipDebitCard()" style="cursor: pointer;" title="Click to flip front / back">
+                                <!-- FRONT FACE -->
+                                <div class="card-3d-front" id="card3DFront"
+                                     th:classappend="${debitCard.status == 'BLOCKED' ? 'card-blocked' : ''}">
+                                    <!-- Front Top Row -->
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-shield-halved fs-4" style="color: #a3e635;"></i>
+                                            <div>
+                                                <div class="fw-bold tracking-tight text-white leading-none fs-6">SmartBank <span style="color: #a3e635;">AI</span></div>
+                                                <div class="x-small text-white-50" style="font-size: 0.65rem;">DIGITAL PLATINUM</div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-wifi text-light fs-5 fa-rotate-90 opacity-75"></i>
+                                            <span class="card-glow-pill" th:text="${debitCard.cardType}">RuPay Platinum</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Chip & Debit Tag -->
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="card-chip"></div>
+                                        <span class="x-small font-monospace text-white-50 tracking-wider">INTERNATIONAL DEBIT</span>
+                                    </div>
+
+                                    <!-- Card Number & Reveal Eye -->
+                                    <div class="mb-3">
+                                        <span class="x-small text-uppercase text-white-50 tracking-wider d-block mb-1" style="font-size: 0.65rem;">Card Number</span>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div class="card-number-display" id="displayedCardNumber"
+                                                 th:data-masked="${debitCard.cardNumber}"
+                                                 th:data-raw="${debitCard.formattedCardNumber != null ? debitCard.formattedCardNumber : debitCard.rawCardNumber}"
+                                                 th:data-clean-raw="${debitCard.rawCardNumber}"
+                                                 th:text="${debitCard.cardNumber}">
+                                                **** **** **** 1234
+                                            </div>
+                                            <div class="d-flex align-items-center gap-1.5" onclick="event.stopPropagation();">
+                                                <button type="button" class="card-action-icon-btn" id="cardEyeBtn" onclick="toggleCardNumberVisibility()" title="Show/Hide Full Card Number">
+                                                    <i class="fa-solid fa-eye" id="cardEyeIcon"></i>
+                                                </button>
+                                                <button type="button" class="card-action-icon-btn" id="cardCopyBtn" onclick="copyCardNumberToClipboard()" title="Copy 16-Digit Number">
+                                                    <i class="fa-solid fa-copy" id="cardCopyIcon"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Front Bottom Row: Cardholder & Expiry -->
+                                    <div class="d-flex justify-content-between align-items-end">
+                                        <div>
+                                            <span class="x-small text-uppercase text-white-50 tracking-wider d-block" style="font-size: 0.65rem;">Cardholder Name</span>
+                                            <span class="fw-bold text-white small text-uppercase letter-spacing-wide" th:text="${debitCard.cardHolderName}">RAHUL SHARMA</span>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="x-small text-uppercase text-white-50 tracking-wider d-block" style="font-size: 0.65rem;">Valid Thru</span>
+                                            <span class="fw-bold text-white small font-monospace" th:text="${debitCard.expiryDateFormatted}">10/31</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- BACK FACE -->
+                                <div class="card-3d-back" id="card3DBack"
+                                     th:classappend="${debitCard.status == 'BLOCKED' ? 'card-blocked' : ''}">
+                                    <!-- Black Magnetic Stripe -->
+                                    <div class="card-magnetic-stripe"></div>
+
+                                    <!-- Signature & CVV Panel -->
+                                    <div class="card-signature-area">
+                                        <div class="card-signature-strip">
+                                            <span th:text="${debitCard.cardHolderName}">Authorized Signature</span>
+                                        </div>
+                                        <div class="text-end" onclick="event.stopPropagation();">
+                                            <span class="x-small text-white-50 d-block mb-1" style="font-size: 0.65rem;">CVV</span>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <div class="card-cvv-box" id="displayedCvv"
+                                                     th:data-raw="${debitCard.cvv != null ? debitCard.cvv : '842'}">•••</div>
+                                                <button type="button" class="card-action-icon-btn" id="cvvEyeBtn" onclick="toggleCvvVisibility()" title="Show/Hide CVV">
+                                                    <i class="fa-solid fa-eye" id="cvvEyeIcon"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Back Info & Support -->
+                                    <div class="p-3 pt-0">
+                                        <p class="x-small text-white-50 mb-2" style="font-size: 0.65rem; line-height: 1.35;">
+                                            This card is issued by SmartBank AI. For 24x7 customer assistance, lost card reporting, or disputes dial 1800-SMARTBANK or email support@smartbank.ai.
+                                        </p>
+                                        <div class="d-flex justify-content-between align-items-center border-top border-white border-opacity-10 pt-2">
+                                            <span class="x-small font-monospace text-white-50">CARD ID: #<span th:text="${debitCard.id}">1</span></span>
+                                            <span class="badge bg-light text-dark font-monospace x-small px-2 py-0.5">RUPAY PLATINUM</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Action Buttons Toolbar -->
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="flipDebitCard()">
+                                <i class="fa-solid fa-rotate me-1.5 text-warning"></i>Flip Card
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleCardNumberVisibility()">
+                                <i class="fa-solid fa-eye me-1.5 text-info" id="toolbarEyeIcon"></i><span id="toolbarEyeText">Show Card Number</span>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleCvvVisibility()">
+                                <i class="fa-solid fa-lock me-1.5 text-success" id="toolbarCvvIcon"></i><span id="toolbarCvvText">Show CVV</span>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyCardNumberToClipboard()">
+                                <i class="fa-solid fa-copy me-1.5 text-primary" id="toolbarCopyIcon"></i>Copy Number
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Security Alert Pill -->
+                    <div class="mt-4 p-3 rounded-3 border bg-light bg-opacity-50">
+                        <div class="d-flex align-items-center gap-2 text-warning mb-1">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span class="fw-bold small text-dark">Security Best Practice</span>
+                        </div>
+                        <p class="x-small text-secondary mb-0">
+                            Never share your 16-digit debit card number, CVV code, or OTP with anyone. SmartBank AI representatives will never ask for your confidential card details.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Card Governance, Status & Limits -->
+            <div class="col-xl-6 col-lg-5 col-md-12">
+                <div class="d-flex flex-column gap-4">
+                    <!-- Card Governance & Status Box -->
+                    <div class="glass-card p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0 text-dark">
+                                <i class="fa-solid fa-shield-halved me-2 text-warning"></i>Card Security & Status
+                            </h5>
+                            <span class="x-small text-muted font-monospace">Instant Toggle</span>
+                        </div>
+
+                        <p class="text-secondary small mb-3">
+                            Instantly lock or unlock your card. When blocked, all ATM cash withdrawals, online shopping, and POS transactions are immediately declined.
+                        </p>
+
+                        <div class="p-3 rounded-3 border mb-3"
+                             id="ctrlStatusContainer"
+                             th:classappend="${debitCard.status == 'ACTIVE' ? 'bg-success bg-opacity-10 border-success border-opacity-25' : 'bg-danger bg-opacity-10 border-danger border-opacity-25'}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="x-small text-uppercase tracking-wider fw-bold d-block"
+                                          id="ctrlStatusLabel"
+                                          th:classappend="${debitCard.status == 'ACTIVE' ? 'text-success' : 'text-danger'}">Current Status</span>
+                                    <h5 class="fw-bold mb-0 mt-0.5 text-dark" id="ctrlStatusText" th:text="${debitCard.status}">ACTIVE</h5>
+                                </div>
+                                <button type="button" class="btn fw-semibold"
+                                        id="pageCardToggleBtn"
+                                        th:classappend="${debitCard.status == 'ACTIVE' ? 'btn-danger' : 'btn-success'}"
+                                        th:data-card-id="${debitCard.id}"
+                                        th:data-status="${debitCard.status}"
+                                        onclick="handlePageCardToggle(this.getAttribute('data-card-id'), this.getAttribute('data-status'))">
+                                    <i th:class="${debitCard.status == 'ACTIVE' ? 'fa-solid fa-ban me-1.5' : 'fa-solid fa-check-circle me-1.5'}"></i>
+                                    <span id="pageCardToggleBtnText" th:text="${debitCard.status == 'ACTIVE' ? 'Block Card Instantly' : 'Activate Card'}">Block Card Instantly</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card Controls List -->
+                        <div class="d-flex flex-column gap-2.5">
+                            <div class="d-flex justify-content-between align-items-center p-2.5 bg-light rounded-3 border">
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <i class="fa-solid fa-globe text-primary fs-5"></i>
+                                    <div>
+                                        <div class="fw-semibold text-dark small">Online & E-Commerce Transactions</div>
+                                        <div class="x-small text-secondary">Allows payments on Amazon, Flipkart, Swiggy, etc.</div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25 px-2.5 py-1">Enabled</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center p-2.5 bg-light rounded-3 border">
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <i class="fa-solid fa-wifi fa-rotate-90 text-warning fs-5"></i>
+                                    <div>
+                                        <div class="fw-semibold text-dark small">Contactless (NFC) Tap & Pay</div>
+                                        <div class="x-small text-secondary">No PIN required for transactions up to ₹5,000</div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25 px-2.5 py-1">Enabled</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center p-2.5 bg-light rounded-3 border">
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <i class="fa-solid fa-plane-departure text-secondary fs-5"></i>
+                                    <div>
+                                        <div class="fw-semibold text-dark small">International Usage</div>
+                                        <div class="x-small text-secondary">Restricted for domestic Indian transactions only</div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-secondary bg-opacity-15 text-secondary border border-secondary border-opacity-25 px-2.5 py-1">Disabled</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Limits & Linked Account Box -->
+                    <div class="glass-card p-4">
+                        <h5 class="fw-bold mb-3 text-dark">
+                            <i class="fa-solid fa-gauge-high me-2 text-warning"></i>Daily Limits & Linked Account
+                        </h5>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between text-secondary small mb-1">
+                                <span><i class="fa-solid fa-money-bill-wave me-1.5 text-muted"></i>ATM Cash Withdrawal Limit</span>
+                                <strong class="text-dark">₹50,000 / day</strong>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 15%;" aria-valuenow="15" aria-valuemin="0" aria-valuem0ax="100"></div>
+                            </div>
+                            <span class="x-small text-muted mt-1 d-block">₹0 withdrawn today</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between text-secondary small mb-1">
+                                <span><i class="fa-solid fa-cart-shopping me-1.5 text-muted"></i>Online POS & Merchant Limit</span>
+                                <strong class="text-dark">₹1,00,000 / day</strong>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <span class="x-small text-muted mt-1 d-block">₹0 spent today</span>
+                        </div>
+
+                        <!-- Linked Account Specs Table -->
+                        <div class="p-3 bg-light rounded-3 border">
+                            <div class="row g-2 text-start">
+                                <div class="col-6">
+                                    <span class="x-small text-secondary d-block">Linked Account Number</span>
+                                    <span class="font-monospace fw-bold text-dark" th:text="${debitCard.accountNumber}">1002345678</span>
+                                </div>
+                                <div class="col-6">
+                                    <span class="x-small text-secondary d-block">Account Type</span>
+                                    <span class="fw-bold text-dark" th:text="${debitCard.accountType}">SAVING</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <span class="x-small text-secondary d-block">Issue Date</span>
+                                    <span class="fw-bold text-dark font-monospace" th:text="${debitCard.issueDate}">2026-10-11</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <span class="x-small text-secondary d-block">Expiry Date</span>
+                                    <span class="fw-bold text-dark font-monospace" th:text="${debitCard.expiryDate}">2031-10-11</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fallback if customer does not have debit card yet -->
+        <div th:unless="${debitCard != null}" class="glass-card p-5 text-center my-5">
+            <i class="fa-solid fa-credit-card text-warning opacity-50 display-1 mb-3"></i>
+            <h4 class="fw-bold text-dark">No Debit Card Found</h4>
+            <p class="text-secondary max-w-md mx-auto mb-4">
+                We did not find a debit card linked to your active bank account. Click the button below to automatically generate your RuPay Platinum Debit Card.
+            </p>
+            <button type="button" class="btn btn-warning px-4 py-2 fw-semibold" onclick="requestPageCardAutoProvision()">
+                <i class="fa-solid fa-bolt me-2"></i>Generate My Debit Card Now
+            </button>
+        </div>
+    </main>
+
+    <!-- Copy to Clipboard Toast Notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 2000;">
+        <div id="cardCopyToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-success fs-5"></i>
+                    <span id="toastMessage">16-Digit Debit Card number copied to clipboard!</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script for Card Interactivity -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const sessionToken = /*[[${sessionToken}]]*/ '';
+        if (sessionToken) {
+            try {
+                localStorage.setItem('token', sessionToken);
+            } catch (e) {}
+        }
+        /*]]>*/
+
+        let isCardFlipped = false;
+        let isNumberVisible = false;
+        let isCvvVisible = false;
+
+        // Flip Card Front / Back
+        function flipDebitCard() {
+            const inner = document.getElementById('card3DInner');
+            if (inner) {
+                isCardFlipped = !isCardFlipped;
+                if (isCardFlipped) {
+                    inner.classList.add('is-flipped');
+                } else {
+                    inner.classList.remove('is-flipped');
+                }
+            }
+        }
+
+        // Toggle Full Card Number Visibility
+        function toggleCardNumberVisibility() {
+            const numDisplay = document.getElementById('displayedCardNumber');
+            const eyeIcon = document.getElementById('cardEyeIcon');
+            const toolbarIcon = document.getElementById('toolbarEyeIcon');
+            const toolbarText = document.getElementById('toolbarEyeText');
+            if (!numDisplay) return;
+
+            const masked = numDisplay.getAttribute('data-masked') || '**** **** **** 1234';
+            const raw = numDisplay.getAttribute('data-raw') || masked;
+
+            isNumberVisible = !isNumberVisible;
+
+            if (isNumberVisible) {
+                numDisplay.textContent = raw;
+                if (eyeIcon) {
+                    eyeIcon.classList.remove('fa-eye');
+                    eyeIcon.classList.add('fa-eye-slash');
+                }
+                if (toolbarIcon) {
+                    toolbarIcon.classList.remove('fa-eye');
+                    toolbarIcon.classList.add('fa-eye-slash');
+                }
+                if (toolbarText) toolbarText.textContent = 'Hide Card Number';
+            } else {
+                numDisplay.textContent = masked;
+                if (eyeIcon) {
+                    eyeIcon.classList.remove('fa-eye-slash');
+                    eyeIcon.classList.add('fa-eye');
+                }
+                if (toolbarIcon) {
+                    toolbarIcon.classList.remove('fa-eye-slash');
+                    toolbarIcon.classList.add('fa-eye');
+                }
+                if (toolbarText) toolbarText.textContent = 'Show Card Number';
+            }
+        }
+
+        // Toggle CVV Visibility
+        function toggleCvvVisibility() {
+            const cvvDisplay = document.getElementById('displayedCvv');
+            const eyeIcon = document.getElementById('cvvEyeIcon');
+            const toolbarIcon = document.getElementById('toolbarCvvIcon');
+            const toolbarText = document.getElementById('toolbarCvvText');
+            if (!cvvDisplay) return;
+
+            const rawCvv = cvvDisplay.getAttribute('data-raw') || '842';
+            isCvvVisible = !isCvvVisible;
+
+            if (isCvvVisible) {
+                cvvDisplay.textContent = rawCvv;
+                if (eyeIcon) {
+                    eyeIcon.classList.remove('fa-eye');
+                    eyeIcon.classList.add('fa-eye-slash');
+                }
+                if (toolbarIcon) {
+                    toolbarIcon.classList.remove('fa-lock');
+                    toolbarIcon.classList.add('fa-lock-open');
+                }
+                if (toolbarText) toolbarText.textContent = 'Hide CVV';
+            } else {
+                cvvDisplay.textContent = '•••';
+                if (eyeIcon) {
+                    eyeIcon.classList.remove('fa-eye-slash');
+                    eyeIcon.classList.add('fa-eye');
+                }
+                if (toolbarIcon) {
+                    toolbarIcon.classList.remove('fa-lock-open');
+                    toolbarIcon.classList.add('fa-lock');
+                }
+                if (toolbarText) toolbarText.textContent = 'Show CVV';
+            }
+        }
+
+        // Copy Card Number to Clipboard
+        function copyCardNumberToClipboard() {
+            const numDisplay = document.getElementById('displayedCardNumber');
+            if (!numDisplay) return;
+
+            const cleanRaw = numDisplay.getAttribute('data-clean-raw') ||
+                             numDisplay.getAttribute('data-raw')?.replace(/\s+/g, '') ||
+                             numDisplay.textContent.replace(/\s+/g, '');
+
+            navigator.clipboard.writeText(cleanRaw).then(() => {
+                showToast('16-Digit Card Number copied to clipboard: ' + cleanRaw);
+                const copyIcon = document.getElementById('cardCopyIcon');
+                if (copyIcon) {
+                    copyIcon.className = 'fa-solid fa-check text-success';
+                    setTimeout(() => {
+                        copyIcon.className = 'fa-solid fa-copy';
+                    }, 2000);
+                }
+            }).catch(() => {
+                showToast('Failed to copy. Please copy manually: ' + cleanRaw);
+            });
+        }
+
+        function showToast(msg) {
+            const toastEl = document.getElementById('cardCopyToast');
+            const msgEl = document.getElementById('toastMessage');
+            if (msgEl) msgEl.textContent = msg;
+            if (toastEl && window.bootstrap) {
+                const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+                toast.show();
+            } else {
+                alert(msg);
+            }
+        }
+
+        // Handle Customer Card Status Toggle (Active / Blocked)
+        async function handlePageCardToggle(cardId, currentStatus) {
+            const isBlocking = (currentStatus === 'ACTIVE');
+            const confirmMsg = isBlocking
+                ? 'Are you sure you want to BLOCK your debit card? You will not be able to perform ATM or online transactions until you unblock it.'
+                : 'Are you sure you want to ACTIVATE / UNBLOCK your debit card?';
+
+            if (!confirm(confirmMsg)) return;
+
+            const btn = document.getElementById('pageCardToggleBtn');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Updating...';
+            }
+
+            try {
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+                const token = sessionToken || localStorage.getItem('token') || '';
+
+                const headers = { 
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                };
+                if (csrfToken) headers[csrfHeader] = csrfToken;
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+
+                const response = await fetch(`/api/debit-cards/${cardId}/toggle-status`, {
+                    method: 'POST',
+                    headers: headers
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.message || 'Failed to update debit card status');
+                }
+
+                const updated = await response.json();
+
+                // Update UI live
+                const newStatus = updated.status;
+                const front = document.getElementById('card3DFront');
+                const back = document.getElementById('card3DBack');
+                const ctrlStatusText = document.getElementById('ctrlStatusText');
+                const ctrlStatusContainer = document.getElementById('ctrlStatusContainer');
+                const ctrlStatusLabel = document.getElementById('ctrlStatusLabel');
+                const pageCardStatusBadge = document.getElementById('pageCardStatusBadge');
+
+                if (newStatus === 'BLOCKED') {
+                    if (front) front.classList.add('card-blocked');
+                    if (back) back.classList.add('card-blocked');
+                    if (btn) {
+                        btn.className = 'btn btn-success fw-semibold';
+                        btn.setAttribute('data-status', 'BLOCKED');
+                        btn.innerHTML = '<i class="fa-solid fa-check-circle me-1.5"></i><span id="pageCardToggleBtnText">Activate Card</span>';
+                    }
+                    if (ctrlStatusText) ctrlStatusText.textContent = 'BLOCKED';
+                    if (ctrlStatusContainer) {
+                        ctrlStatusContainer.className = 'p-3 rounded-3 border mb-3 bg-danger bg-opacity-10 border-danger border-opacity-25';
+                    }
+                    if (ctrlStatusLabel) {
+                        ctrlStatusLabel.className = 'x-small text-uppercase tracking-wider fw-bold d-block text-danger';
+                    }
+                    if (pageCardStatusBadge) {
+                        pageCardStatusBadge.className = 'badge rounded-pill px-3 py-1.5 font-semibold fs-6 bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25';
+                        pageCardStatusBadge.innerHTML = '<i class="fa-solid fa-ban me-1.5"></i><span id="pageCardStatusText">BLOCKED</span>';
+                    }
+                    showToast('Debit card has been BLOCKED successfully.');
+                } else {
+                    if (front) front.classList.remove('card-blocked');
+                    if (back) back.classList.remove('card-blocked');
+                    if (btn) {
+                        btn.className = 'btn btn-danger fw-semibold';
+                        btn.setAttribute('data-status', 'ACTIVE');
+                        btn.innerHTML = '<i class="fa-solid fa-ban me-1.5"></i><span id="pageCardToggleBtnText">Block Card Instantly</span>';
+                    }
+                    if (ctrlStatusText) ctrlStatusText.textContent = 'ACTIVE';
+                    if (ctrlStatusContainer) {
+                        ctrlStatusContainer.className = 'p-3 rounded-3 border mb-3 bg-success bg-opacity-10 border-success border-opacity-25';
+                    }
+                    if (ctrlStatusLabel) {
+                        ctrlStatusLabel.className = 'x-small text-uppercase tracking-wider fw-bold d-block text-success';
+                    }
+                    if (pageCardStatusBadge) {
+                        pageCardStatusBadge.className = 'badge rounded-pill px-3 py-1.5 font-semibold fs-6 bg-success bg-opacity-20 text-success border border-success border-opacity-25';
+                        pageCardStatusBadge.innerHTML = '<i class="fa-solid fa-circle-check me-1.5"></i><span id="pageCardStatusText">ACTIVE</span>';
+                    }
+                    showToast('Debit card has been ACTIVATED successfully.');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+                if (btn) btn.innerHTML = originalHtml;
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        // Provision missing card
+        async function requestPageCardAutoProvision() {
+            try {
+                const token = sessionToken || localStorage.getItem('token') || '';
+                const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+                const res = await fetch('/api/debit-cards/my-card', { headers });
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Please contact Super Admin to run Debit Card Backfill or provision your card.');
+                }
+            } catch (e) {
+                alert('Unable to provision card: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>

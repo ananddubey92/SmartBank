@@ -1,0 +1,405 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Expense Analytics & AI Insights - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('analytics')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- Alerts -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Section Header -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 x-small">
+                        <i class="fa-solid fa-chart-pie me-1"></i>Automated NLP Expense Categorization
+                    </span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 x-small">
+                        <i class="fa-solid fa-brain me-1"></i>Real-Time Insights
+                    </span>
+                </div>
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-chart-line me-2 text-gradient"></i>Expense Analytics &amp; Spending Intelligence
+                </h3>
+                <p class="text-secondary mb-0">Multi-dimensional cashflow breakdown, automated transaction classification, and predictive spending insights.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/transfer}" class="btn btn-primary-custom d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>New Transfer</span>
+                </a>
+                <a th:href="@{/transactions}" class="btn btn-secondary-custom d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>All Ledger Logs</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 4 Key Analytics KPI Cards -->
+        <div class="row g-4 mb-4">
+            <!-- Current Month Spending -->
+            <div class="col-lg-3 col-md-6">
+                <div class="glass-card p-4 h-100 position-relative overflow-hidden">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="text-secondary small fw-medium">Current Month Outflow</span>
+                        <div class="avatar-initials-circle" style="width: 36px; height: 36px; background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                    </div>
+                    <div class="fs-3 fw-bold text-dark mb-2" 
+                         th:text="'₹' + ${#numbers.formatDecimal(analytics.currentMonthSpending, 1, 'COMMA', 2, 'POINT')}">₹0.00</div>
+                    
+                    <div class="d-flex align-items-center gap-2 small">
+                        <span th:if="${analytics.monthOverMonthPercent != null and analytics.monthOverMonthPercent > 0}" 
+                              class="text-danger fw-semibold d-flex align-items-center">
+                            <i class="fa-solid fa-arrow-trend-up me-1"></i><span th:text="${analytics.monthOverMonthPercent} + '%'">+0%</span>
+                        </span>
+                        <span th:if="${analytics.monthOverMonthPercent != null and analytics.monthOverMonthPercent < 0}" 
+                              class="text-success fw-semibold d-flex align-items-center">
+                            <i class="fa-solid fa-arrow-trend-down me-1"></i><span th:text="${analytics.monthOverMonthPercent} + '%'">-0%</span>
+                        </span>
+                        <span th:if="${analytics.monthOverMonthPercent == null or analytics.monthOverMonthPercent == 0}" 
+                              class="text-secondary">
+                            <span>0% change</span>
+                        </span>
+                        <span class="text-secondary x-small">vs last month</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Expense Category -->
+            <div class="col-lg-3 col-md-6">
+                <div class="glass-card p-4 h-100 position-relative overflow-hidden">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="text-secondary small fw-medium">Top Spending Pillar</span>
+                        <div class="avatar-initials-circle" style="width: 36px; height: 36px; background: rgba(56, 189, 248, 0.1); color: var(--accent-color);">
+                            <i class="fa-solid fa-crown"></i>
+                        </div>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark mb-2 text-truncate" 
+                         th:text="${analytics.highestCategoryName != null ? analytics.highestCategoryName : 'None Yet'}">FOOD</div>
+                    <div class="small text-secondary">
+                        Amount: <strong class="text-info" 
+                                       th:text="'₹' + ${#numbers.formatDecimal(analytics.highestCategoryAmount, 1, 'COMMA', 2, 'POINT')}">₹0.00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Inflow (Deposits) -->
+            <div class="col-lg-3 col-md-6">
+                <div class="glass-card p-4 h-100 position-relative overflow-hidden">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="text-secondary small fw-medium">Cumulative Inflow</span>
+                        <div class="avatar-initials-circle" style="width: 36px; height: 36px; background: rgba(34, 197, 94, 0.1); color: #22c55e;">
+                            <i class="fa-solid fa-arrow-down-long"></i>
+                        </div>
+                    </div>
+                    <div class="fs-3 fw-bold text-success mb-2" 
+                         th:text="'₹' + ${#numbers.formatDecimal(analytics.totalDeposits, 1, 'COMMA', 2, 'POINT')}">₹0.00</div>
+                    <span class="x-small text-secondary">Total verified account credits</span>
+                </div>
+            </div>
+
+            <!-- Total Outflow (Transfers + Withdrawals) -->
+            <div class="col-lg-3 col-md-6">
+                <div class="glass-card p-4 h-100 position-relative overflow-hidden">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="text-secondary small fw-medium">Cumulative Outflow</span>
+                        <div class="avatar-initials-circle" style="width: 36px; height: 36px; background: rgba(249, 115, 22, 0.1); color: #f97316;">
+                            <i class="fa-solid fa-arrow-up-long"></i>
+                        </div>
+                    </div>
+                    <div class="fs-3 fw-bold text-danger mb-2" 
+                         th:text="'₹' + ${#numbers.formatDecimal(analytics.totalTransferred.add(analytics.totalWithdrawals), 1, 'COMMA', 2, 'POINT')}">₹0.00</div>
+                    <span class="x-small text-secondary">Transfers &amp; Withdrawals debited</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights & Overview Row -->
+        <div class="row g-4 mb-4">
+            <!-- Dynamic AI Spending Insights -->
+            <div class="col-lg-7 col-md-12">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="logo-circle" style="width: 32px; height: 32px; font-size: 0.9rem; background: rgba(56, 189, 248, 0.15); color: var(--accent-color);">
+                                <i class="fa-solid fa-brain"></i>
+                            </div>
+                            <h5 class="fw-bold text-white mb-0">AI Financial Insights &amp; Alerts</h5>
+                        </div>
+                        <span class="badge bg-primary-subtle text-info border border-info-subtle px-2 py-1 x-small">
+                            Dynamic Algorithm
+                        </span>
+                    </div>
+
+                    <div class="d-flex flex-column gap-3">
+                        <div th:each="insight : ${analytics.insights}" class="p-3 rounded-3 d-flex align-items-start gap-3" 
+                             style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color); transition: all 0.2s ease;">
+                            <i class="fa-solid fa-wand-magic-sparkles mt-1 fs-5" style="color: var(--accent-lime);"></i>
+                            <div>
+                                <span class="small fw-medium" style="color: var(--text-primary);" th:text="${insight}">Smart financial insight message</span>
+                            </div>
+                        </div>
+
+                        <!-- Fallback if no specific insights -->
+                        <div th:if="${#lists.isEmpty(analytics.insights)}" class="text-center text-secondary py-4">
+                            <i class="fa-solid fa-chart-simple display-6 opacity-25 mb-2"></i>
+                            <p class="small mb-0">Perform transactions to unlock AI-powered budget optimizations and category predictions.</p>
+                        </div>
+                    </div>
+
+                    <!-- Additional Security & Hygiene Info -->
+                    <div class="mt-4 p-3 rounded-3" style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2);">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-shield-check text-success fs-4"></i>
+                            <div class="x-small text-secondary">
+                                <strong class="text-dark d-block">Transaction Execution Health:</strong>
+                                <span th:text="${analytics.successfulTransactions}">0</span> Successful • 
+                                <span class="text-warning" th:text="${analytics.lowRiskCount}">0</span> Low-Risk • 
+                                <span class="text-danger" th:text="${analytics.blockedTransactions}">0</span> Fraud Blocked
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Spending Doughnut Chart -->
+            <div class="col-lg-5 col-md-12">
+                <div class="glass-card p-4 h-100 d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-chart-pie me-2 text-gradient"></i>Monthly Category Split</h5>
+                        <span class="x-small text-secondary">Current Billing Cycle</span>
+                    </div>
+                    
+                    <div class="flex-grow-1 position-relative d-flex align-items-center justify-content-center" style="min-height: 250px;">
+                        <canvas id="categoryDoughnutChart" style="max-height: 250px;"></canvas>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <span class="x-small text-secondary">
+                            <i class="fa-solid fa-info-circle me-1"></i>Click legend items to toggle individual spending streams.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6-Month Cash Flow Trend & Detailed Category Progress Bars -->
+        <div class="row g-4 mb-4">
+            <!-- 6-Month Cash Flow Bar Chart -->
+            <div class="col-lg-7 col-md-12">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1"><i class="fa-solid fa-chart-column me-2 text-gradient"></i>6-Month Cash Flow Trend</h5>
+                            <span class="x-small text-secondary">Inflow (Credits) vs Outflow (Debits &amp; Transfers)</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 x-small">
+                            <span class="d-flex align-items-center gap-1 text-success"><span style="width: 10px; height: 10px; background: #22c55e; border-radius: 2px;"></span> Inflow</span>
+                            <span class="d-flex align-items-center gap-1 text-danger"><span style="width: 10px; height: 10px; background: #ef4444; border-radius: 2px;"></span> Outflow</span>
+                        </div>
+                    </div>
+
+                    <div class="position-relative" style="min-height: 280px;">
+                        <canvas id="cashFlowBarChart" style="max-height: 300px; width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Breakdown Detailed List -->
+            <div class="col-lg-5 col-md-12">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="fw-bold mb-0"><i class="fa-solid fa-layer-group me-2 text-gradient"></i>Category Breakdown</h5>
+                        <span class="x-small text-secondary">All 8 AI Classes</span>
+                    </div>
+
+                    <div class="d-flex flex-column gap-3 scrollable-list" style="max-height: 320px; overflow-y: auto;">
+                        <div th:each="cat : ${analytics.categoryBreakdown}" class="p-2 rounded-2" style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                         th:style="'width: 28px; height: 28px; background: ' + ${cat.color} + '22; color: ' + ${cat.color} + '; font-size: 0.8rem;'">
+                                        <i th:class="${cat.icon}"></i>
+                                    </div>
+                                    <span class="small fw-semibold text-dark" th:text="${cat.displayName}">Category</span>
+                                </div>
+                                <div class="text-end">
+                                    <span class="small fw-bold text-dark" th:text="'₹' + ${#numbers.formatDecimal(cat.amount, 1, 'COMMA', 2, 'POINT')}">₹0.00</span>
+                                    <span class="x-small text-secondary ms-1" th:text="'(' + ${#numbers.formatDecimal(cat.percentage, 1, 1)} + '%)'">(0%)</span>
+                                </div>
+                            </div>
+                            <!-- Percentage Progress Bar -->
+                            <div class="progress" style="height: 6px; background-color: rgba(255, 255, 255, 0.05); border-radius: 4px;">
+                                <div class="progress-bar rounded-pill" role="progressbar" 
+                                     th:style="'width: ' + ${cat.percentage} + '%; background-color: ' + ${cat.color} + ';'" 
+                                     th:aria-valuenow="${cat.percentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Chart.js Render Scripts -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener("DOMContentLoaded", function() {
+            // Category Doughnut Chart
+            const categoryData = /*[[${analytics.categoryBreakdown}]]*/ [];
+            
+            const catLabels = [];
+            const catValues = [];
+            const catColors = [];
+
+            if (categoryData && categoryData.length > 0) {
+                categoryData.forEach(item => {
+                    if (item.amount > 0) {
+                        catLabels.push(item.displayName);
+                        catValues.push(item.amount);
+                        catColors.push(item.color || '#38bdf8');
+                    }
+                });
+            }
+
+            // If empty, show placeholder
+            if (catLabels.length === 0) {
+                catLabels.push('No Expenses');
+                catValues.push(1);
+                catColors.push('rgba(163, 230, 53, 0.25)');
+            }
+
+            const doughnutCtx = document.getElementById('categoryDoughnutChart').getContext('2d');
+            new Chart(doughnutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        data: catValues,
+                        backgroundColor: catColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#4b5563',
+                                font: { family: 'Outfit', size: 11 },
+                                boxWidth: 12,
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.label + ': ₹' + Number(context.raw).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 6-Month Inflow vs Outflow Cash Flow Bar Chart
+            const trendMonths = /*[[${analytics.trendMonths}]]*/ ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+            const inflowTrends = /*[[${analytics.inflowTrends}]]*/ [0, 0, 0, 0, 0, 0];
+            const outflowTrends = /*[[${analytics.outflowTrends}]]*/ [0, 0, 0, 0, 0, 0];
+
+            const barCtx = document.getElementById('cashFlowBarChart').getContext('2d');
+            new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: trendMonths,
+                    datasets: [
+                        {
+                            label: 'Inflow (₹)',
+                            data: inflowTrends,
+                            backgroundColor: 'rgba(34, 197, 94, 0.75)',
+                            borderColor: '#22c55e',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.7
+                        },
+                        {
+                            label: 'Outflow (₹)',
+                            data: outflowTrends,
+                            backgroundColor: 'rgba(239, 68, 68, 0.75)',
+                            borderColor: '#ef4444',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.7
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: { family: 'Inter', size: 12 }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: { family: 'Inter', size: 11 },
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.dataset.label + ': ₹' + Number(context.raw).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+        /*]]>*/
+    </script>
+</body>
+</html>

@@ -1,0 +1,679 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Admin Fraud Monitoring & Management - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('admin')}"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top py-3 mb-4 admin-navbar">
+        <div class="container-fluid px-md-5">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn border-0 text-white p-0 fs-4 d-lg-none" id="sidebarToggleBtn" type="button" aria-label="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/}">
+                    <i class="fa-solid fa-shield-halved text-gradient fs-3"></i>
+                    <span class="fw-bold tracking-tight text-white">SmartBank <span class="text-gradient">AI</span> <span class="badge bg-danger bg-opacity-20 text-danger ms-2 fs-6 py-1">ADMIN CONSOLE</span></span>
+                </a>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30 px-3 py-1.5 rounded-pill small">
+                    <i class="fa-solid fa-user-shield me-1"></i>BANK ADMIN
+                </span>
+                
+                <!-- Notifications Center Bell with Dropdown & Unread Badge -->
+                <div class="dropdown position-relative">
+                    <button type="button" class="header-icon-btn icon-bell position-relative border-0" 
+                            id="adminNotificationBellDropdown" data-bs-toggle="dropdown" aria-expanded="false" 
+                            title="Notification Alerts" onclick="loadGlobalNotificationsDropdown()">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="adminHeaderNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                              style="font-size: 0.65rem; padding: 0.25em 0.5em;"
+                              th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}"
+                              th:text="${unreadNotificationCount}">
+                            0
+                        </span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-0 shadow-lg border-0" aria-labelledby="adminNotificationBellDropdown" style="width: 360px; max-width: 90vw; background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 12px; overflow: hidden; z-index: 1050;">
+                        <div class="d-flex align-items-center justify-content-between p-3 border-bottom" style="border-color: rgba(255,255,255,0.08) !important;">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-bell text-warning"></i>
+                                <h6 class="fw-bold text-white mb-0">Notifications</h6>
+                                <span id="adminDropdownUnreadBadge" class="badge bg-danger rounded-pill x-small"
+                                      th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}"
+                                      th:text="${unreadNotificationCount} + ' unread'">0 unread</span>
+                            </div>
+                            <button type="button" class="btn btn-link btn-sm text-decoration-none text-secondary p-0 x-small" onclick="markAllGlobalNotificationsAsRead(event)">
+                                <i class="fa-solid fa-check-double me-1"></i>Mark all read
+                            </button>
+                        </div>
+                        <div class="notification-dropdown-body p-2" id="adminNotificationDropdownList" style="max-height: 340px; overflow-y: auto;">
+                            <div class="text-center py-4 text-secondary small">
+                                <div class="spinner-border spinner-border-sm text-warning mb-2" role="status"></div>
+                                <p class="mb-0">Loading alerts...</p>
+                            </div>
+                        </div>
+                        <div class="p-2 border-top text-center rounded-bottom" style="border-color: rgba(255,255,255,0.08) !important; background-color: rgba(255,255,255,0.02);">
+                            <a th:href="@{/notifications}" class="x-small fw-semibold text-warning text-decoration-none d-block py-1">
+                                <span>View All Notifications</span> <i class="fa-solid fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <span class="text-secondary small d-none d-sm-inline">Logged in as: <strong class="text-white" th:text="${user != null ? user.fullName : 'System Administrator'}">Administrator</strong></span>
+                <button type="button" class="btn btn-outline-danger btn-sm py-1.5 px-3" id="adminNavbarLogoutBtn" onclick="openLogoutModal(event)" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal">
+                    <i class="fa-solid fa-right-from-bracket me-2"></i>Sign Out
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-md-5 animate-fade-in admin-content">
+        <div class="w-100">
+            <!-- Alerts -->
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+                
+                <!-- Quick AJAX notification banner -->
+                <div id="adminAjaxAlert" class="alert d-none border-0 small rounded-3 mb-4 animate-fade-in" role="alert">
+                    <i class="fa-solid fa-circle-check me-2"></i>
+                    <span id="adminAjaxAlertMessage">Status updated.</span>
+                </div>
+
+                <!-- Admin Fraud Monitoring Header -->
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25 px-2.5 py-1 x-small">
+                                <i class="fa-solid fa-radiation me-1"></i>Security Audit Level 4
+                            </span>
+                            <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-25 px-2.5 py-1 x-small">
+                                <i class="fa-solid fa-bolt me-1"></i>Real-Time Fraud Ops
+                            </span>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-1"><i class="fa-solid fa-shield-virus me-2 text-danger"></i>Fraud Monitoring Dashboard</h3>
+                        <p class="text-secondary mb-0">Live transaction risk auditing, automated threat containment, and manual compliance overrides.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a th:href="@{/fraud-detection}" class="btn btn-secondary-custom btn-sm d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-flask-vial text-info"></i>
+                            <span>Fraud Lab Simulator</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Bank-Wide Master Statistics Row (8 Cards) -->
+                <div class="row g-3 mb-4">
+                    <div class="col-xl-3 col-md-6">
+                        <div class="glass-card p-3 text-center h-100">
+                            <span class="text-secondary x-small text-uppercase tracking-wider"><i class="fa-solid fa-users me-1 text-primary"></i>Total Customers</span>
+                            <h3 class="fw-bold mt-2 mb-0 text-dark" th:text="${#lists.size(users)}">3</h3>
+                            <span class="x-small text-secondary">Registered profiles</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="glass-card p-3 text-center h-100">
+                            <span class="text-secondary x-small text-uppercase tracking-wider"><i class="fa-solid fa-wallet me-1 text-info"></i>Total Accounts</span>
+                            <h3 class="fw-bold mt-2 mb-0 text-dark" th:text="${#lists.size(accounts)}">2</h3>
+                            <span class="x-small text-secondary">Active bank ledgers</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="glass-card p-3 text-center h-100">
+                            <span class="text-secondary x-small text-uppercase tracking-wider"><i class="fa-solid fa-receipt me-1 text-secondary"></i>Total Transactions</span>
+                            <h3 class="fw-bold mt-2 mb-0 text-dark" th:text="${#lists.size(transactions)}">24</h3>
+                            <span class="x-small text-secondary">Ledger records</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="glass-card p-3 text-center h-100">
+                            <span class="text-secondary x-small text-uppercase tracking-wider"><i class="fa-solid fa-vault me-1 text-success"></i>Combined Liquidity</span>
+                            <h3 class="fw-bold mt-2 mb-0 text-success">₹<span th:text="${#numbers.formatDecimal(totalLiquidity, 1, 'COMMA', 0, 'POINT')}">1,70,630</span></h3>
+                            <span class="x-small text-success">Vault Reserves</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="glass-card p-3 text-center h-100">
+                            <span class="text-secondary x-small text-uppercase tracking-wider"><i class="fa-solid fa-shield-check me-1 text-success"></i>Safe Transactions</span>
+                            <h3 class="fw-bold mt-2 mb-0 text-success" th:text="${safeCount}">21</h3>
+                            <span class="x-small text-success">Low / Medium Risk Cleared</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="glass-card p-3 text-center h-100">
+                            <span class="text-secondary x-small text-uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i>High Risk Detected</span>
+                            <h3 class="fw-bold mt-2 mb-0 text-danger" th:text="${fraudDetected}">2</h3>
+                            <span class="x-small text-danger">High / Critical Flagged</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="glass-card p-3 text-center h-100">
+                            <span class="text-secondary x-small text-uppercase tracking-wider"><i class="fa-solid fa-eye me-1 text-warning"></i>Under Review</span>
+                            <h3 class="fw-bold mt-2 mb-0 text-warning" th:text="${underReviewCount}">1</h3>
+                            <span class="x-small text-warning">Pending Analyst Action</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="glass-card p-3 text-center h-100">
+                            <span class="text-secondary x-small text-uppercase tracking-wider"><i class="fa-solid fa-ban me-1 text-danger"></i>AI Blocked</span>
+                            <h3 class="fw-bold mt-2 mb-0 text-danger" th:text="${blockedCount}">1</h3>
+                            <span class="x-small text-danger">Hard Threat Prevented</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suspicious Transactions Review Queue (Main Focus) -->
+                <div class="glass-card p-4 mb-4 border border-danger border-opacity-25" style="background: rgba(239, 68, 68, 0.03);">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="logo-circle" style="width: 36px; height: 36px; background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">Suspicious Transactions Audit Queue</h5>
+                                <span class="x-small text-secondary">High risk transactions requiring administrative inspection or override</span>
+                            </div>
+                        </div>
+                        <span class="badge bg-danger text-white px-2.5 py-1 x-small" th:text="${suspiciousTransactions != null ? suspiciousTransactions.size() : 0} + ' Flagged'">
+                            2 Flagged
+                        </span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Ref ID</th>
+                                    <th>Routing (From &rarr; To)</th>
+                                    <th>Amount</th>
+                                    <th>Risk Assessment</th>
+                                    <th>Current Status</th>
+                                    <th>AI Trigger Reasons</th>
+                                    <th class="text-center">Admin Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="tx : ${suspiciousTransactions}" th:id="'tx-row-' + ${tx.transactionReference}">
+                                    <td class="font-monospace small text-info fw-bold" th:text="${tx.transactionReference}">TX1234ABCD</td>
+                                    <td class="small">
+                                        <span class="text-white" th:text="${tx.sourceAccountNumber}">1002345678</span>
+                                        <span class="text-secondary mx-1">&rarr;</span>
+                                        <span class="text-white-50" th:text="${tx.destinationAccountNumber != null ? tx.destinationAccountNumber : 'ATM/External'}">2009876543</span>
+                                    </td>
+                                    <td class="fw-bold text-white">₹<span th:text="${#numbers.formatDecimal(tx.amount, 1, 'COMMA', 2, 'POINT')}">85,000.00</span></td>
+                                    <td>
+                                        <span th:class="${'badge ' + 
+                                            (tx.riskLevel == 'CRITICAL' or tx.riskLevel == 'HIGH' ? 'bg-danger text-white' : 
+                                            (tx.riskLevel == 'MEDIUM' ? 'bg-warning text-dark' : 'bg-success text-white'))}">
+                                            <span th:text="${tx.riskScore != null ? tx.riskScore : 0} + '/100 ' + ${tx.riskLevel}">89/100 HIGH</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span th:id="'status-pill-' + ${tx.transactionReference}" class="badge font-monospace"
+                                              th:classappend="${tx.status == 'BLOCKED' ? 'bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25' : (tx.status == 'UNDER_REVIEW' ? 'bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25' : 'bg-success bg-opacity-20 text-success border border-success border-opacity-25')}"
+                                              th:text="${tx.status}">BLOCKED</span>
+                                    </td>
+                                    <td class="x-small text-secondary" style="max-width: 220px;" th:text="${tx.riskReasons}">
+                                        Anomalous amount spike; unverified late night transfer.
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-danger btn-sm py-1 px-2 x-small"
+                                                    th:data-ref="${tx.transactionReference}"
+                                                    onclick="performTxAction(this.getAttribute('data-ref'), 'block')"
+                                                    title="Block Transaction">
+                                                <i class="fa-solid fa-ban me-1"></i>Block
+                                            </button>
+                                            <button type="button" class="btn btn-outline-warning btn-sm py-1 px-2 x-small"
+                                                    th:data-ref="${tx.transactionReference}"
+                                                    onclick="performTxAction(this.getAttribute('data-ref'), 'review')"
+                                                    title="Mark Under Review">
+                                                <i class="fa-solid fa-eye me-1"></i>Review
+                                            </button>
+                                            <button type="button" class="btn btn-outline-success btn-sm py-1 px-2 x-small"
+                                                    th:data-ref="${tx.transactionReference}"
+                                                    onclick="performTxAction(this.getAttribute('data-ref'), 'mark-safe')"
+                                                    title="Authorize / Mark Safe">
+                                                <i class="fa-solid fa-circle-check me-1"></i>Mark Safe
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr th:if="${#lists.isEmpty(suspiciousTransactions)}">
+                                    <td colspan="7" class="text-center py-4 text-secondary">
+                                        <i class="fa-solid fa-shield-check text-success fs-4 me-2"></i>
+                                        <span>No suspicious or flagged transactions pending review.</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Account Management Panel -->
+                <div class="glass-card p-4 mb-4">
+                    <h5 class="fw-bold mb-4 text-gradient"><i class="fa-solid fa-wallet me-2"></i>Account Management Panel</h5>
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle text-start">
+                            <thead>
+                                <tr>
+                                    <th>Account Number</th>
+                                    <th>Username</th>
+                                    <th>Customer Name</th>
+                                    <th>Type</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="acc : ${accounts}">
+                                    <td class="fw-bold text-white font-monospace" th:text="${acc.accountNumber}">1000000001</td>
+                                    <td th:text="${acc.userUsername}" class="small text-secondary">customer1</td>
+                                    <td th:text="${acc.userFullName}" class="small">Customer Name</td>
+                                    <td>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 small" th:text="${acc.accountType}">SAVING</span>
+                                    </td>
+                                    <td class="fw-bold text-white">₹<span th:text="${#numbers.formatDecimal(acc.balance, 1, 'COMMA', 2, 'POINT')}">1,000.00</span></td>
+                                    <td>
+                                        <span th:id="'status-badge-' + ${acc.accountNumber}"
+                                              th:class="${acc.status == 'ACTIVE' ? 'badge-active' : 'badge-suspended'}" 
+                                              th:text="${acc.status}">ACTIVE</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex align-items-center justify-content-center gap-1">
+                                            <select th:data-acc="${acc.accountNumber}" class="form-select form-select-sm form-control-custom py-1 admin-status-select" style="min-width: 110px; font-size: 0.8rem;">
+                                                <option value="ACTIVE" th:selected="${acc.status == 'ACTIVE'}">ACTIVE</option>
+                                                <option value="SUSPENDED" th:selected="${acc.status == 'SUSPENDED'}">SUSPENDED</option>
+                                                <option value="CLOSED" th:selected="${acc.status == 'CLOSED'}">CLOSED</option>
+                                            </select>
+                                            <a th:href="@{/statement(accountNumber=${acc.accountNumber})}" class="btn btn-outline-warning btn-sm py-1 px-2 x-small" title="View Statement">
+                                                <i class="fa-solid fa-file-invoice-dollar me-1"></i>Statement
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Customer Directory & Audit Log Row (2 Columns) -->
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="glass-card p-4 h-100">
+                            <h5 class="fw-bold mb-4 text-gradient"><i class="fa-solid fa-users me-2"></i>Global Profiles Directory</h5>
+                            <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                                <table class="table table-custom align-middle text-start">
+                                    <thead>
+                                        <tr>
+                                            <th>Name / Contact</th>
+                                            <th>Username</th>
+                                            <th>KYC PAN</th>
+                                            <th>Role</th>
+                                            <th class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="u : ${users}">
+                                            <td>
+                                                <div class="fw-bold text-white" th:text="${u.fullName}">User FullName</div>
+                                                <small class="text-secondary" th:text="${u.email}">email@domain.com</small>
+                                            </td>
+                                            <td th:text="${u.username}" class="small">username</td>
+                                            <td class="small font-monospace" th:text="${u.pan != null ? u.pan : 'N/A'}">PAN</td>
+                                            <td>
+                                                <span th:class="${u.role.name() == 'ROLE_ADMIN' ? 'badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 px-2' : 'badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-20 px-2'}" th:text="${#strings.replace(u.role.name(), 'ROLE_', '')}">CUSTOMER</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="d-flex justify-content-center gap-1">
+                                                    <button type="button" class="btn btn-outline-info btn-sm py-1 px-2 x-small"
+                                                            th:data-username="${u.username}"
+                                                            onclick="viewCustomerDetails(this.getAttribute('data-username'))"
+                                                            title="View Complete Customer Profile">
+                                                        <i class="fa-solid fa-id-card me-1"></i>Details
+                                                    </button>
+                                                    <a th:href="@{/statement(accountNumber=${u.accounts != null && !u.accounts.isEmpty() ? u.accounts[0].accountNumber : ''})}" class="btn btn-outline-warning btn-sm py-1 px-2 x-small" title="View Statement">
+                                                        <i class="fa-solid fa-file-invoice-dollar me-1"></i>Statement
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="glass-card p-4 h-100">
+                            <h5 class="fw-bold mb-4 text-gradient"><i class="fa-solid fa-receipt me-2"></i>Global Audit Log</h5>
+                            <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                                <table class="table table-custom align-middle text-start">
+                                    <thead>
+                                        <tr>
+                                            <th>Ref &amp; Details</th>
+                                            <th>Type</th>
+                                            <th>Amount</th>
+                                            <th>Risk &amp; Status</th>
+                                            <th class="text-end">Timestamp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="tx : ${transactions}">
+                                            <td>
+                                                <span class="font-monospace text-secondary small text-white" th:text="${#strings.abbreviate(tx.transactionReference, 10)}">UUID</span>
+                                                <br>
+                                                <small class="text-secondary" th:text="${tx.description}">Deposit</small>
+                                            </td>
+                                            <td>
+                                                <span th:if="${tx.type == 'DEPOSIT'}" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2">DEP</span>
+                                                <span th:if="${tx.type == 'WITHDRAWAL'}" class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2">WIT</span>
+                                                <span th:if="${tx.type == 'TRANSFER'}" class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2">TRA</span>
+                                            </td>
+                                            <td class="fw-bold text-white">₹<span th:text="${#numbers.formatDecimal(tx.amount, 1, 'COMMA', 2, 'POINT')}">100.00</span></td>
+                                            <td>
+                                                <span th:class="${tx.status == 'BLOCKED' ? 'badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25 x-small' : (tx.status == 'UNDER_REVIEW' ? 'badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25 x-small' : 'badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 x-small')}" th:text="${tx.status}">COMPLETED</span>
+                                                <br>
+                                                <small class="text-secondary" th:text="${tx.riskScore != null ? tx.riskScore + '/100 ' + tx.riskLevel : 'LOW'}">LOW</small>
+                                            </td>
+                                            <td class="text-end small text-secondary" th:text="${#temporals.format(tx.timestamp, 'dd MMM HH:mm')}">10 Aug 22:00</td>
+                                        </tr>
+                                        <tr th:if="${#lists.isEmpty(transactions)}">
+                                            <td colspan="5" class="text-center text-secondary py-4">No global audits found.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    <!-- Customer Details Modal -->
+    <div class="modal fade" id="customerDetailModal" tabindex="-1" aria-labelledby="customerDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content glass-card border border-opacity-10" style="background: #ffffff;">
+                <div class="modal-header border-bottom border-opacity-10">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-id-card text-gradient fs-4"></i>
+                        <h5 class="modal-title fw-bold" id="customerDetailModalLabel">Customer Profile &amp; KYC File</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="modalLoading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="small text-secondary mt-2 mb-0">Retrieving customer KYC records...</p>
+                    </div>
+                    <div id="modalContent" class="d-none">
+                        <!-- Demographics Row -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color);">
+                                    <h6 class="text-gradient fw-bold mb-3"><i class="fa-solid fa-user me-2"></i>Personal Demographics</h6>
+                                    <div class="small text-secondary mb-1">Full Name: <strong class="text-dark" id="custFullName">-</strong></div>
+                                    <div class="small text-secondary mb-1">Username: <span class="text-primary font-monospace fw-bold" id="custUsername">-</span></div>
+                                    <div class="small text-secondary mb-1">Email: <span class="text-dark" id="custEmail">-</span></div>
+                                    <div class="small text-secondary mb-1">Phone: <span class="text-dark" id="custPhone">-</span></div>
+                                    <div class="small text-secondary mb-1">Date of Birth: <span class="text-dark" id="custDob">-</span></div>
+                                    <div class="small text-secondary mb-0">Gender: <span class="text-dark" id="custGender">-</span></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color);">
+                                    <h6 class="text-gradient fw-bold mb-3"><i class="fa-solid fa-shield-halved me-2"></i>KYC Verification &amp; Security</h6>
+                                    <div class="small text-secondary mb-1">PAN Card: <span class="font-monospace text-warning fw-bold" id="custPan">-</span></div>
+                                    <div class="small text-secondary mb-1">Aadhaar UID: <span class="font-monospace text-dark" id="custAadhar">-</span></div>
+                                    <div class="small text-secondary mb-1">Security Status: <span class="badge" id="custSecurityStatus">-</span></div>
+                                    <div class="small text-secondary mb-1">Failed Attempts: <span class="text-dark" id="custFailedAttempts">-</span></div>
+                                    <div class="small text-secondary mb-1">Last Login: <span class="text-dark" id="custLastLogin">-</span></div>
+                                    <div class="small text-secondary mb-0">Permanent Address: <span class="text-dark" id="custAddress">-</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Customer Accounts Table -->
+                        <div class="mt-3">
+                            <h6 class="text-gradient fw-bold mb-2"><i class="fa-solid fa-wallet me-2"></i>Linked Bank Accounts</h6>
+                            <div class="table-responsive">
+                                <table class="table table-custom align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Account Number</th>
+                                            <th>Type</th>
+                                            <th>Balance</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="custAccountsTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-opacity-10">
+                    <button type="button" class="btn btn-secondary-custom btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}" class="admin-footer"></footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Global Notifications Client Script -->
+    <script th:src="@{/js/notifications-global.js}"></script>
+
+    <!-- Reusable Logout Confirmation Modal -->
+    <div th:replace="~{fragments/layout :: logoutModal}"></div>
+
+    <!-- Save session token if present on page load -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const sessionToken = /*[[${sessionToken}]]*/ '';
+        if (sessionToken) {
+            localStorage.setItem('token', sessionToken);
+        }
+
+        // Mobile Sidebar Drawer Logic for Admin
+        const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const appSidebar = document.getElementById('appSidebar');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.addEventListener('click', () => {
+                if (appSidebar) appSidebar.classList.add('show');
+                if (sidebarBackdrop) sidebarBackdrop.classList.remove('d-none');
+            });
+        }
+        if (closeSidebarBtn) {
+            closeSidebarBtn.addEventListener('click', () => {
+                if (appSidebar) appSidebar.classList.remove('show');
+                if (sidebarBackdrop) sidebarBackdrop.classList.add('d-none');
+            });
+        }
+        if (sidebarBackdrop) {
+            sidebarBackdrop.addEventListener('click', () => {
+                if (appSidebar) appSidebar.classList.remove('show');
+                if (sidebarBackdrop) sidebarBackdrop.classList.add('d-none');
+            });
+        }
+
+        const alertBox = document.getElementById('adminAjaxAlert');
+        const alertMsg = document.getElementById('adminAjaxAlertMessage');
+
+        // View Customer Details Modal Handler
+        async function viewCustomerDetails(username) {
+            const token = localStorage.getItem('token');
+            const modalEl = document.getElementById('customerDetailModal');
+            const modalInstance = new bootstrap.Modal(modalEl);
+            modalInstance.show();
+
+            const loading = document.getElementById('modalLoading');
+            const content = document.getElementById('modalContent');
+            loading.classList.remove('d-none');
+            content.classList.add('d-none');
+
+            try {
+                const response = await fetch(`/api/admin/users/${encodeURIComponent(username)}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + (sessionToken || token || '')
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load customer profile: HTTP ' + response.status);
+                }
+
+                const data = await response.json();
+
+                document.getElementById('custFullName').textContent = data.fullName || 'N/A';
+                document.getElementById('custUsername').textContent = data.username || 'N/A';
+                document.getElementById('custEmail').textContent = data.email || 'N/A';
+                document.getElementById('custPhone').textContent = data.phone || 'N/A';
+                document.getElementById('custDob').textContent = data.dob || 'N/A';
+                document.getElementById('custGender').textContent = data.gender || 'N/A';
+
+                document.getElementById('custPan').textContent = data.pan || 'N/A';
+                document.getElementById('custAadhar').textContent = data.aadhar ? ('•••• •••• ' + data.aadhar.slice(-4)) : 'N/A';
+                
+                const secBadge = document.getElementById('custSecurityStatus');
+                secBadge.textContent = data.accountSecurityStatus || 'GOOD';
+                secBadge.className = data.accountSecurityStatus === 'ALERT' ? 'badge bg-danger' : 'badge bg-success';
+
+                document.getElementById('custFailedAttempts').textContent = (data.failedLoginAttempts || 0) + ' attempts';
+                document.getElementById('custLastLogin').textContent = data.lastLoginTime ? new Date(data.lastLoginTime).toLocaleString('en-IN') : 'Never';
+                document.getElementById('custAddress').textContent = data.address || 'N/A';
+
+                const tbody = document.getElementById('custAccountsTableBody');
+                tbody.innerHTML = '';
+                if (data.accounts && data.accounts.length > 0) {
+                    data.accounts.forEach(acc => {
+                        const tr = document.createElement('tr');
+                        const balanceFormatted = Number(acc.balance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        const statusClass = acc.status === 'ACTIVE' ? 'badge-active' : 'badge-suspended';
+                        tr.innerHTML = `
+                            <td class="font-monospace text-white fw-bold">${acc.accountNumber}</td>
+                            <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">${acc.accountType}</span></td>
+                            <td class="text-white fw-bold">₹${balanceFormatted}</td>
+                            <td><span class="${statusClass}">${acc.status}</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-3">No linked bank accounts found.</td></tr>';
+                }
+
+                loading.classList.add('d-none');
+                content.classList.remove('d-none');
+
+            } catch (err) {
+                loading.innerHTML = `<div class="text-danger small"><i class="fa-solid fa-circle-exclamation me-1"></i>${err.message}</div>`;
+            }
+        }
+
+        // Suspicious Transaction Actions (Block, Review, Mark Safe)
+        async function performTxAction(ref, action) {
+            const token = localStorage.getItem('token');
+            const pill = document.getElementById('status-pill-' + ref);
+
+            try {
+                const response = await fetch(`/api/admin/transactions/${encodeURIComponent(ref)}/${action}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + (sessionToken || token || '')
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Action failed on server: HTTP ' + response.status);
+                }
+
+                const data = await response.json();
+
+                if (pill) {
+                    pill.textContent = data.status;
+                    if (data.status === 'BLOCKED') {
+                        pill.className = 'badge font-monospace bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25';
+                    } else if (data.status === 'UNDER_REVIEW') {
+                        pill.className = 'badge font-monospace bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25';
+                    } else {
+                        pill.className = 'badge font-monospace bg-success bg-opacity-20 text-success border border-success border-opacity-25';
+                    }
+                }
+
+                alertBox.className = 'alert alert-success border-0 bg-success bg-opacity-10 text-success small rounded-3 mb-4';
+                alertMsg.textContent = `Transaction [${ref}] status successfully transitioned to ${data.status}!`;
+                alertBox.classList.remove('d-none');
+
+            } catch (err) {
+                alertBox.className = 'alert alert-danger border-0 bg-danger bg-opacity-10 text-danger small rounded-3 mb-4';
+                alertMsg.textContent = err.message || 'Failed to update transaction status.';
+                alertBox.classList.remove('d-none');
+            }
+        }
+
+        // Account status switcher script
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelects = document.querySelectorAll('.admin-status-select');
+
+            statusSelects.forEach(select => {
+                select.addEventListener('change', async function() {
+                    const accNum = this.getAttribute('data-acc');
+                    const statusVal = this.value;
+                    const badge = document.getElementById('status-badge-' + accNum);
+                    
+                    this.disabled = true;
+                    const token = localStorage.getItem('token');
+
+                    try {
+                        const response = await fetch(`/api/admin/accounts/${accNum}/status?status=${statusVal}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': token ? `Bearer ${token}` : ''
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to update account status on the backend ledger.');
+                        }
+
+                        const accountResponse = await response.json();
+
+                        badge.textContent = accountResponse.status;
+                        if (accountResponse.status === 'ACTIVE') {
+                            badge.className = 'badge-active';
+                        } else {
+                            badge.className = 'badge-suspended';
+                        }
+
+                        alertBox.className = 'alert alert-success border-0 bg-success bg-opacity-10 text-success small rounded-3 mb-4';
+                        alertMsg.textContent = `Account #${accNum} status updated to ${accountResponse.status} successfully!`;
+                        alertBox.classList.remove('d-none');
+                        
+                    } catch (err) {
+                        alertBox.className = 'alert alert-danger border-0 bg-danger bg-opacity-10 text-danger small rounded-3 mb-4';
+                        alertMsg.textContent = err.message || 'Error occurred while updating status.';
+                        alertBox.classList.remove('d-none');
+                    } finally {
+                        this.disabled = false;
+                        alertBox.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }
+                });
+            });
+        });
+        /*]]>*/
+    </script>
+</body>
+</html>

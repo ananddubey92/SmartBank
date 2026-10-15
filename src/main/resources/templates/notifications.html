@@ -1,0 +1,292 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Notification Alerts - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('notifications')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- Alerts -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Section Header -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25 px-2.5 py-1 x-small">
+                        <i class="fa-solid fa-bell me-1"></i>Real-Time Event Stream
+                    </span>
+                    <span id="unreadAlertsHeaderBadge" class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-25 px-2.5 py-1 x-small"
+                          th:text="(${unreadCount != null ? unreadCount : 0}) + ' Unread Alerts'">
+                        0 Unread Alerts
+                    </span>
+                </div>
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-bell me-2 text-warning"></i>Notification Center
+                </h3>
+                <p class="text-secondary mb-0">System audit messages, real-time fraud alerts, security challenges, and spending notifications.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-secondary-custom btn-sm d-flex align-items-center gap-1.5" onclick="markAllNotificationsAsRead()">
+                    <i class="fa-solid fa-envelope-open me-1"></i>
+                    <span>Mark All as Read</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="glass-card p-3 mb-4">
+            <div class="d-flex gap-2 flex-wrap" id="notificationFilterTabs">
+                <button type="button" class="btn btn-sm btn-primary-custom px-3 py-1.5 filter-btn active" data-filter="ALL" onclick="filterNotifications('ALL', this)">
+                    All Alerts (<span th:text="${notifications != null ? notifications.size() : 0}">0</span>)
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary-custom px-3 py-1.5 filter-btn" data-filter="UNREAD" onclick="filterNotifications('UNREAD', this)">
+                    Unread Only (<span id="unreadCountTab" th:text="${unreadCount != null ? unreadCount : 0}">0</span>)
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary-custom px-3 py-1.5 filter-btn" data-filter="SECURITY" onclick="filterNotifications('SECURITY', this)">
+                    Fraud & Security
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary-custom px-3 py-1.5 filter-btn" data-filter="TRANSACTIONS" onclick="filterNotifications('TRANSACTIONS', this)">
+                    Transactions & Spending
+                </button>
+            </div>
+        </div>
+
+        <!-- Notifications Feed -->
+        <div class="d-flex flex-column gap-3" id="notificationsFeed">
+            <div th:each="n : ${notifications}" 
+                 th:id="'notification-card-' + ${n.id}"
+                 class="notification-card glass-card p-4 transition-all"
+                 th:classappend="${!n.isRead ? 'border-primary border-opacity-25 unread' : ''}"
+                 th:attr="data-read=${n.isRead}, data-type=${n.type}">
+                
+                <div class="d-flex align-items-start justify-content-between gap-3">
+                    <div class="d-flex align-items-start gap-3">
+                        <!-- Icon Circle -->
+                        <div class="avatar-initials-circle flex-shrink-0"
+                             th:style="'width: 44px; height: 44px; font-size: 1.1rem; background-color: ' + (${n.badgeColor != null ? n.badgeColor + '20' : 'rgba(163, 230, 53, 0.18)'}) + '; color: ' + (${n.badgeColor != null ? n.badgeColor : '#4d7c0f'})">
+                            <i th:class="'fa-solid ' + (${n.icon != null ? n.icon : 'fa-bell'})"></i>
+                        </div>
+
+                        <!-- Content Details -->
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                <h6 class="fw-bold text-dark mb-0" th:text="${n.title}">Notification Title</h6>
+                                <span class="badge x-small py-0.5 px-2 rounded-pill"
+                                      th:style="'background-color: ' + (${n.badgeColor != null ? n.badgeColor + '25' : 'rgba(15, 23, 42, 0.08)'}) + '; color: ' + (${n.badgeColor != null ? n.badgeColor : '#0f172a'})"
+                                      th:text="${n.type}">FRAUD_ALERT</span>
+                                <span th:if="${!n.isRead}" th:id="'unread-badge-' + ${n.id}" class="badge bg-danger rounded-pill x-small">NEW</span>
+                            </div>
+                            <p class="small text-secondary mb-2" th:text="${n.message}">Notification detailed message content.</p>
+                            
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="x-small text-muted">
+                                    <i class="fa-solid fa-clock me-1"></i>
+                                    <span th:text="${#temporals.format(n.createdAt, 'dd MMM yyyy, hh:mm a')}">10 Oct 2026, 10:30 AM</span>
+                                </span>
+                                <a th:if="${n.actionUrl != null and !n.actionUrl.isBlank()}" 
+                                   th:href="@{${n.actionUrl}}" class="x-small text-primary text-decoration-none fw-semibold">
+                                    <span>Take Action</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square ms-1" style="font-size: 0.7rem;"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Actions -->
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <button th:if="${!n.isRead}" th:id="'btn-read-' + ${n.id}"
+                                type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 x-small"
+                                th:data-id="${n.id}" onclick="markAsRead(this.getAttribute('data-id'))" title="Mark as Read">
+                            <i class="fa-solid fa-check me-1"></i>
+                            <span class="d-none d-sm-inline">Mark Read</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(notifications)}" class="text-center py-5 glass-card">
+                <i class="fa-solid fa-bell-slash text-secondary display-5 opacity-25 mb-3 d-block"></i>
+                <h6 class="fw-bold mb-1">No Notifications</h6>
+                <p class="small text-secondary mb-0">You're all caught up! Important account security events and alerts will appear here.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Notification Client Script -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const sessionToken = /*[[${sessionToken}]]*/ '';
+        if (sessionToken) {
+            localStorage.setItem('token', sessionToken);
+        }
+
+        function getAuthHeaders() {
+            const token = sessionToken || localStorage.getItem('token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token && token.trim()) {
+                headers['Authorization'] = 'Bearer ' + token.trim();
+            }
+            return headers;
+        }
+
+        async function markAsRead(id) {
+            const btnRead = document.getElementById('btn-read-' + id);
+            const originalHtml = btnRead ? btnRead.innerHTML : '';
+            if (btnRead) {
+                btnRead.disabled = true;
+                btnRead.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i><span class="d-none d-sm-inline">Updating...</span>';
+            }
+
+            try {
+                const response = await fetch(`/api/notifications/${id}/read`, {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    const card = document.getElementById('notification-card-' + id);
+                    if (card) {
+                        card.setAttribute('data-read', 'true');
+                        card.classList.remove('border-primary', 'border-opacity-25', 'unread');
+
+                        const activeFilterBtn = document.querySelector('#notificationFilterTabs .filter-btn.active');
+                        if (activeFilterBtn && activeFilterBtn.getAttribute('data-filter') === 'UNREAD') {
+                            card.classList.add('d-none');
+                        }
+                    }
+                    const unreadBadge = document.getElementById('unread-badge-' + id);
+                    if (unreadBadge) unreadBadge.remove();
+
+                    if (btnRead) btnRead.remove();
+
+                    decrementHeaderBadge();
+                } else {
+                    console.error('Failed to mark notification as read, status:', response.status);
+                    if (btnRead) {
+                        btnRead.disabled = false;
+                        btnRead.innerHTML = originalHtml;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to mark notification as read:', err);
+                if (btnRead) {
+                    btnRead.disabled = false;
+                    btnRead.innerHTML = originalHtml;
+                }
+            }
+        }
+
+        async function markAllNotificationsAsRead() {
+            try {
+                const response = await fetch('/api/notifications/read-all', {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    document.querySelectorAll('.notification-card').forEach(card => {
+                        card.setAttribute('data-read', 'true');
+                        card.classList.remove('border-primary', 'border-opacity-25', 'unread');
+
+                        const activeFilterBtn = document.querySelector('#notificationFilterTabs .filter-btn.active');
+                        if (activeFilterBtn && activeFilterBtn.getAttribute('data-filter') === 'UNREAD') {
+                            card.classList.add('d-none');
+                        }
+                    });
+                    document.querySelectorAll('[id^="unread-badge-"]').forEach(b => b.remove());
+                    document.querySelectorAll('[id^="btn-read-"]').forEach(b => b.remove());
+
+                    const unreadTab = document.getElementById('unreadCountTab');
+                    if (unreadTab) unreadTab.textContent = '0';
+
+                    const unreadAlertsBadge = document.getElementById('unreadAlertsHeaderBadge');
+                    if (unreadAlertsBadge) unreadAlertsBadge.textContent = '0 Unread Alerts';
+
+                    const headerBadge = document.getElementById('headerNotificationBadge');
+                    if (headerBadge) headerBadge.remove();
+                } else {
+                    console.error('Failed to mark all notifications as read, status:', response.status);
+                }
+            } catch (err) {
+                console.error('Failed to mark all notifications as read:', err);
+            }
+        }
+
+        function decrementHeaderBadge() {
+            const headerBadge = document.getElementById('headerNotificationBadge');
+            const unreadTab = document.getElementById('unreadCountTab');
+            const unreadAlertsBadge = document.getElementById('unreadAlertsHeaderBadge');
+
+            let currentCount = 0;
+            if (unreadTab) {
+                let current = parseInt(unreadTab.textContent.trim()) || 0;
+                currentCount = Math.max(0, current - 1);
+                unreadTab.textContent = currentCount;
+            }
+
+            if (unreadAlertsBadge) {
+                unreadAlertsBadge.textContent = currentCount + ' Unread Alerts';
+            }
+
+            if (headerBadge) {
+                let badgeCount = parseInt(headerBadge.textContent.trim()) || 0;
+                badgeCount = Math.max(0, badgeCount - 1);
+                if (badgeCount === 0) {
+                    headerBadge.remove();
+                } else {
+                    headerBadge.textContent = badgeCount;
+                }
+            }
+        }
+
+        function filterNotifications(type, btn) {
+            document.querySelectorAll('#notificationFilterTabs .filter-btn').forEach(b => {
+                b.classList.remove('btn-primary-custom', 'active');
+                b.classList.add('btn-secondary-custom');
+            });
+            btn.classList.remove('btn-secondary-custom');
+            btn.classList.add('btn-primary-custom', 'active');
+
+            const cards = document.querySelectorAll('.notification-card');
+            cards.forEach(card => {
+                const isRead = card.getAttribute('data-read') === 'true';
+                const cardType = card.getAttribute('data-type') || '';
+
+                if (type === 'ALL') {
+                    card.classList.remove('d-none');
+                } else if (type === 'UNREAD') {
+                    if (!isRead) card.classList.remove('d-none');
+                    else card.classList.add('d-none');
+                } else if (type === 'SECURITY') {
+                    if (cardType === 'FRAUD_ALERT' || cardType === 'SECURITY_ALERT') {
+                        card.classList.remove('d-none');
+                    } else {
+                        card.classList.add('d-none');
+                    }
+                } else if (type === 'TRANSACTIONS') {
+                    if (cardType.includes('TRANSACTION') || cardType.includes('SPENDING')) {
+                        card.classList.remove('d-none');
+                    } else {
+                        card.classList.add('d-none');
+                    }
+                }
+            });
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

@@ -1,0 +1,344 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('AI Banking Assistant - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('ai-assistant')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- Alerts -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Section Header -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-primary bg-opacity-20 text-primary border border-primary border-opacity-25 px-2.5 py-1 x-small">
+                        <i class="fa-solid fa-brain me-1"></i>Private Local NLP Engine
+                    </span>
+                    <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2.5 py-1 x-small">
+                        <i class="fa-solid fa-lock me-1"></i>Zero Third-Party Data Leak
+                    </span>
+                </div>
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-robot me-2 text-primary"></i>AI Banking Assistant
+                </h3>
+                <p class="text-secondary mb-0">Ask questions in plain English about your balances, spending trends, fraud blocks, or affordability.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-secondary-custom btn-sm" onclick="clearChatHistory()">
+                    <i class="fa-solid fa-rotate-left me-1"></i>Reset Conversation
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="row g-4">
+            <div class="col-lg-8 col-md-12">
+                <div class="glass-card d-flex flex-column" style="height: 640px;">
+                    <!-- Chat Header Bar -->
+                    <div class="p-3 border-bottom border-opacity-10 d-flex align-items-center justify-content-between" style="border-color: var(--border-color);">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="logo-circle" style="width: 40px; height: 40px; background: rgba(56, 189, 248, 0.15); color: var(--accent-color);">
+                                <i class="fa-solid fa-robot fs-5"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold text-white mb-0">SmartBank AI Copilot</h6>
+                                <span class="x-small text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i>Active • Ready for queries</span>
+                            </div>
+                        </div>
+                        <span class="badge bg-secondary-subtle text-white-50 x-small font-monospace">Intent Engine v2.0</span>
+                    </div>
+
+                    <!-- Chat Messages Stream -->
+                    <div id="chatMessages" class="p-4 flex-grow-1 overflow-auto d-flex flex-column gap-3" style="scroll-behavior: smooth;">
+                        <!-- Initial Welcome Message from Assistant -->
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="avatar-initials-circle flex-shrink-0" style="width: 34px; height: 34px; background: rgba(163, 230, 53, 0.18); color: #4d7c0f; font-size: 0.85rem;">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="p-3 rounded-3 border text-start" style="background: rgba(15, 23, 42, 0.03); border-color: rgba(163, 230, 53, 0.20); max-width: 80%;">
+                                <p class="small mb-1" style="color: var(--text-primary);">
+                                    Hello <strong th:text="${user != null ? user.fullName : 'Customer'}">Rahul Sharma</strong>! 👋 I am your private AI Banking Assistant.
+                                </p>
+                                <p class="small text-secondary mb-2">
+                                    I can help you monitor transactions, answer balance queries, check spending habits, evaluate budget affordability, and explain flagged fraud alerts.
+                                </p>
+                                <div class="d-flex flex-wrap gap-1.5 mt-2">
+                                    <span class="badge bg-primary bg-opacity-15 text-primary border border-primary border-opacity-25 x-small">Balance Checks</span>
+                                    <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-25 x-small">Spending Breakdown</span>
+                                    <span class="badge bg-warning bg-opacity-15 text-warning border border-warning border-opacity-25 x-small">Fraud Inquiries</span>
+                                    <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25 x-small">Affordability</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Typing Indicator (Hidden by default) -->
+                    <div id="typingIndicator" class="px-4 py-2 d-none">
+                        <div class="d-flex align-items-center gap-2 text-secondary x-small">
+                            <div class="spinner-grow spinner-grow-sm text-primary" role="status" style="width: 0.7rem; height: 0.7rem;"></div>
+                            <span>SmartBank AI is analyzing your financial ledger...</span>
+                        </div>
+                    </div>
+
+                    <!-- Suggestion Chips Bar -->
+                    <div class="px-3 pt-2 pb-1 border-top border-opacity-10 d-flex gap-2 overflow-auto" style="border-color: var(--border-color); white-space: nowrap;">
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 x-small rounded-pill" onclick="sendSuggestion('What is my account balance?')">
+                            💰 Check Balance
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 x-small rounded-pill" onclick="sendSuggestion('How much did I spend this month?')">
+                            📊 Monthly Spending
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 x-small rounded-pill" onclick="sendSuggestion('What is my largest expense category?')">
+                            🏷️ Top Category
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 x-small rounded-pill" onclick="sendSuggestion('Can I afford to spend ₹15,000?')">
+                            💳 Can I afford ₹15,000?
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 x-small rounded-pill" onclick="sendSuggestion('Why was my transaction blocked?')">
+                            🛡️ Why was transfer blocked?
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 x-small rounded-pill" onclick="sendSuggestion('How is my financial health score calculated?')">
+                            ❤️ Health Score Info
+                        </button>
+                    </div>
+
+                    <!-- Chat Input Field -->
+                    <div class="p-3 border-top border-opacity-10" style="border-color: var(--border-color); background: #ffffff;">
+                        <form id="chatForm" onsubmit="handleChatSubmit(event)" class="d-flex gap-2">
+                            <input type="text" id="chatInput" class="form-control form-control-custom"
+                                   placeholder="Ask anything (e.g. 'What is my current balance?' or 'How much did I spend on food?')"
+                                   autocomplete="off" required>
+                            <button type="submit" id="chatSendBtn" class="btn btn-primary-custom px-4 d-flex align-items-center gap-2">
+                                <span>Send</span>
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Assistant Capabilities & Quick Shortcuts -->
+            <div class="col-lg-4 col-md-12">
+                <!-- Data Privacy Card -->
+                <div class="glass-card p-4 mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="fa-solid fa-shield-check text-success fs-5"></i>
+                        <h6 class="fw-bold text-white mb-0">Privacy & Security Guard</h6>
+                    </div>
+                    <p class="x-small text-secondary mb-3">
+                        Queries are processed locally on the secure SmartBank AI server. No financial records or sensitive account credentials are ever transmitted to public external cloud LLMs.
+                    </p>
+                    <ul class="list-unstyled x-small text-white-50 d-flex flex-column gap-2 mb-0">
+                        <li><i class="fa-solid fa-check text-success me-1.5"></i>Strict user-isolated ledger context</li>
+                        <li><i class="fa-solid fa-check text-success me-1.5"></i>Masked account references</li>
+                        <li><i class="fa-solid fa-check text-success me-1.5"></i>Session-authenticated access only</li>
+                    </ul>
+                </div>
+
+                <!-- Common Prompts Card -->
+                <div class="glass-card p-4 mb-4">
+                    <h6 class="fw-bold text-white mb-3"><i class="fa-solid fa-comments me-2 text-gradient"></i>Example Questions</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="p-2 rounded-2 border border-opacity-10 hover-scale-sm cursor-pointer" 
+                             style="background: rgba(255,255,255,0.02); border-color: var(--border-color);"
+                             onclick="sendSuggestion('Show me my recent transactions')">
+                            <span class="x-small text-white d-block fw-semibold">"Show me my recent transactions"</span>
+                            <span class="x-small text-secondary">Summary of recent deposits & transfers</span>
+                        </div>
+
+                        <div class="p-2 rounded-2 border border-opacity-10 hover-scale-sm cursor-pointer" 
+                             style="background: rgba(255,255,255,0.02); border-color: var(--border-color);"
+                             onclick="sendSuggestion('How much did I spend on food this month?')">
+                            <span class="x-small text-white d-block fw-semibold">"How much did I spend on food?"</span>
+                            <span class="x-small text-secondary">Category specific spending tally</span>
+                        </div>
+
+                        <div class="p-2 rounded-2 border border-opacity-10 hover-scale-sm cursor-pointer" 
+                             style="background: rgba(255,255,255,0.02); border-color: var(--border-color);"
+                             onclick="sendSuggestion('Can I afford a 25000 vacation?')">
+                            <span class="x-small text-white d-block fw-semibold">"Can I afford a ₹25,000 vacation?"</span>
+                            <span class="x-small text-secondary">Budget & balance affordability check</span>
+                        </div>
+
+                        <div class="p-2 rounded-2 border border-opacity-10 hover-scale-sm cursor-pointer" 
+                             style="background: rgba(255,255,255,0.02); border-color: var(--border-color);"
+                             onclick="sendSuggestion('Why was my transaction blocked?')">
+                            <span class="x-small text-white d-block fw-semibold">"Why was my transfer blocked?"</span>
+                            <span class="x-small text-secondary">Explains trigger factors from AI Fraud Engine</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Direct Links -->
+                <div class="glass-card p-4">
+                    <h6 class="fw-bold text-white mb-3"><i class="fa-solid fa-arrow-up-right-from-square me-2 text-gradient"></i>Direct Shortcuts</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a th:href="@{/financial-health}" class="btn btn-secondary-custom btn-sm text-start py-2">
+                            <i class="fa-solid fa-heart-pulse me-2 text-success"></i>Financial Health Score
+                        </a>
+                        <a th:href="@{/fraud-detection}" class="btn btn-secondary-custom btn-sm text-start py-2">
+                            <i class="fa-solid fa-shield-virus me-2 text-warning"></i>Fraud Detection Lab
+                        </a>
+                        <a th:href="@{/transfer}" class="btn btn-secondary-custom btn-sm text-start py-2">
+                            <i class="fa-solid fa-money-bill-transfer me-2 text-primary"></i>Initiate Transfer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Chat Interaction Script -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const sessionToken = /*[[${sessionToken}]]*/ '';
+        if (sessionToken) {
+            localStorage.setItem('token', sessionToken);
+        }
+
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        function appendUserMessage(text) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'd-flex align-items-start justify-content-end gap-3';
+            wrapper.innerHTML = `
+                <div class="p-3 rounded-3 text-start" style="background: #0f172a; color: #ffffff; border: 1px solid rgba(163, 230, 53, 0.35); max-width: 80%; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);">
+                    <p class="small text-white mb-0">${escapeHtml(text)}</p>
+                </div>
+                <div class="avatar-initials-circle flex-shrink-0" style="width: 34px; height: 34px; background: rgba(15, 23, 42, 0.1); color: #0f172a; font-size: 0.85rem;">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            `;
+            chatMessages.appendChild(wrapper);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function appendAssistantMessage(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'd-flex align-items-start gap-3';
+
+            let actionHtml = '';
+            if (data.actionUrl) {
+                actionHtml = `<div class="mt-2.5 pt-2 border-top border-opacity-10" style="border-color: rgba(163, 230, 53, 0.20);">
+                    <a href="${data.actionUrl}" class="btn btn-sm btn-primary-custom py-1 px-2.5 x-small d-inline-flex align-items-center gap-1.5">
+                        <span>Open Related Page</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>`;
+            }
+
+            let chipsHtml = '';
+            if (data.suggestedActions && data.suggestedActions.length > 0) {
+                chipsHtml = '<div class="d-flex flex-wrap gap-1 mt-2.5">';
+                data.suggestedActions.forEach(s => {
+                    chipsHtml += `<button type="button" class="btn btn-sm btn-outline-secondary py-0.5 px-2 x-small rounded-pill" onclick="sendSuggestion('${escapeHtml(s)}')">${escapeHtml(s)}</button>`;
+                });
+                chipsHtml += '</div>';
+            }
+
+            wrapper.innerHTML = `
+                <div class="avatar-initials-circle flex-shrink-0" style="width: 34px; height: 34px; background: rgba(163, 230, 53, 0.18); color: #4d7c0f; font-size: 0.85rem;">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="p-3 rounded-3 border text-start" style="background: rgba(15, 23, 42, 0.03); border-color: rgba(163, 230, 53, 0.20); max-width: 80%;">
+                    <p class="small mb-1" style="color: var(--text-primary); white-space: pre-line;">${escapeHtml(data.answer)}</p>
+                    ${actionHtml}
+                    ${chipsHtml}
+                </div>
+            `;
+            chatMessages.appendChild(wrapper);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            chatInput.value = '';
+            await processQuery(text);
+        }
+
+        function sendSuggestion(query) {
+            chatInput.value = '';
+            processQuery(query);
+        }
+
+        async function processQuery(queryText) {
+            appendUserMessage(queryText);
+
+            chatSendBtn.disabled = true;
+            typingIndicator.classList.remove('d-none');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/ai/assistant', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (sessionToken || token || '')
+                    },
+                    body: JSON.stringify({ query: queryText })
+                });
+
+                if (!response.ok) {
+                    throw new Error('AI Assistant service returned HTTP ' + response.status);
+                }
+
+                const data = await response.json();
+                appendAssistantMessage(data);
+
+            } catch (err) {
+                console.error('Chat error:', err);
+                appendAssistantMessage({
+                    answer: "I apologize, but I encountered an issue analyzing your account records: " + err.message + ". Please try again or check your network connection.",
+                    suggestedActions: ["Check Balance", "Recent Transactions"]
+                });
+            } finally {
+                chatSendBtn.disabled = false;
+                typingIndicator.classList.add('d-none');
+                chatInput.focus();
+            }
+        }
+
+        function clearChatHistory() {
+            chatMessages.innerHTML = `
+                <div class="d-flex align-items-start gap-3">
+                    <div class="avatar-initials-circle flex-shrink-0" style="width: 34px; height: 34px; background: rgba(163, 230, 53, 0.18); color: #4d7c0f; font-size: 0.85rem;">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="p-3 rounded-3 border text-start" style="background: rgba(15, 23, 42, 0.03); border-color: rgba(163, 230, 53, 0.20); max-width: 80%;">
+                        <p class="small mb-0" style="color: var(--text-primary);">Conversation reset. How can I assist you with your banking needs today?</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

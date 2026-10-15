@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Cash Deposit - SmartBank AI')}"></head>
+<body class="bg-primary">
+
+    <!-- Fixed Left Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('deposit')}"></div>
+
+    <!-- Authenticated Top Header -->
+    <header th:replace="~{fragments/layout :: header}"></header>
+
+    <!-- Main Content Area -->
+    <main class="main-content-wrapper animate-fade-in">
+        <!-- Alerts -->
+        <div th:replace="~{fragments/layout :: alerts}"></div>
+
+        <!-- Section Title -->
+        <div class="mb-4">
+            <h3 class="fw-bold text-dark mb-1"><i class="fa-solid fa-circle-down me-2 text-gradient"></i>Cash Ledger Deposit</h3>
+            <p class="text-secondary mb-0">Deposit cash directly into one of your core ledger nodes.</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 col-md-10">
+                <div class="glass-card p-4">
+                    <form th:action="@{/transactions/deposit}" method="post">
+                        <!-- Account Selector -->
+                        <div class="mb-4">
+                            <label class="form-label-custom">Target Account</label>
+                            <select name="accountNumber" class="form-select form-control-custom" required>
+                                <option value="" disabled selected>-- Select Ledger Account --</option>
+                                <option th:each="acc : ${accounts}" th:value="${acc.accountNumber}" 
+                                        th:text="${acc.accountNumber + ' (' + acc.accountType + ') - Bal: ₹' + #numbers.formatDecimal(acc.balance, 1, 'COMMA', 2, 'POINT')}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Amount Input -->
+                        <div class="mb-4">
+                            <label class="form-label-custom">Amount to Deposit (INR)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0 border-opacity-10 text-white" style="border-color: var(--border-color);">₹</span>
+                                <input type="number" name="amount" class="form-control form-control-custom border-start-0 ps-2" 
+                                       placeholder="0.00" min="1.0" step="any" required>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-primary-custom w-100 py-3 mt-2 d-flex align-items-center justify-content-center gap-2">
+                            <i class="fa-solid fa-circle-down"></i>
+                            <span>Execute Deposit</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Centralized Footer -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Save session token if present on page load -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const sessionToken = /*[[${sessionToken}]]*/ '';
+        if (sessionToken) {
+            localStorage.setItem('token', sessionToken);
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

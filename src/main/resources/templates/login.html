@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Sign In - SmartBank AI')}"></head>
+<body class="auth-bg p-0 m-0" style="min-height: 100vh; overflow-x: hidden;">
+
+    <div class="container-fluid p-3 p-md-4 min-vh-100 d-flex align-items-center justify-content-center animate-fade-in-up">
+        <div class="login-split-card">
+            <!-- Left Panel (55% width on desktop, hidden on mobile) -->
+            <div class="login-image-panel">
+                <img th:src="@{/images/login-banking.png}" class="login-hero-image" alt="SmartBank AI Secure Banking">
+                <div class="login-image-overlay"></div>
+                <div class="login-image-content d-flex flex-column justify-content-between h-100">
+                    <a th:href="@{/}" class="d-inline-flex align-items-center gap-2 text-decoration-none animate-fade-in-up-delay delay-1">
+                        <i class="fa-solid fa-shield-halved text-gradient fs-2"></i>
+                        <span class="fw-bold tracking-tight text-white fs-4">SmartBank <span class="text-gradient">AI</span></span>
+                    </a>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-primary bg-opacity-25 text-white border border-primary border-opacity-25 px-3 py-1 rounded-pill animate-fade-in-up-delay delay-2">
+                                <i class="fa-solid fa-brain text-gradient me-2"></i>AI Fraud Detection Engine
+                            </span>
+                        </div>
+                        <h2 class="fw-bold text-white mb-2 animate-fade-in-up-delay delay-3">Intelligent Banking &amp; Transaction Guard</h2>
+                        <p class="text-secondary-custom mb-0 animate-fade-in-up-delay delay-4">
+                            Next-generation online banking with deterministic 0–100 risk scoring, automated expense categorization, and zero-trust step-up verification.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel (45% width on desktop, 100% on mobile) -->
+            <div class="login-form-panel">
+                <div class="login-form-wrapper">
+                    <div class="text-center mb-4">
+                        <a th:href="@{/}" class="d-inline-flex align-items-center gap-2 text-decoration-none mb-3 d-md-none animate-fade-in-up-delay delay-1">
+                            <i class="fa-solid fa-shield-halved text-gradient fs-2"></i>
+                            <span class="fw-bold tracking-tight text-white fs-4">SmartBank <span class="text-gradient">AI</span></span>
+                        </a>
+                        <h2 class="fw-bold text-white animate-fade-in-up-delay delay-1">Welcome Back</h2>
+                        <p class="text-secondary animate-fade-in-up-delay delay-2">Please sign in to access your secure account</p>
+                    </div>
+
+                    <!-- Client-side / AJAX error container -->
+                    <div id="errorAlert" class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger small rounded-3 mb-4 d-none" role="alert">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>
+                        <span id="errorMessage">Invalid credentials</span>
+                    </div>
+
+                    <!-- Standard Spring Session alert for redirects -->
+                    <div th:if="${param.error}" class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger small rounded-3 mb-4 animate-fade-in-up-delay delay-2" role="alert">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i> Invalid username or password. Please try again.
+                    </div>
+
+                    <!-- Alert for logout -->
+                    <div th:if="${param.logout}" class="alert alert-success border-0 bg-success bg-opacity-10 text-success small rounded-3 mb-4 animate-fade-in-up-delay delay-2" role="alert">
+                        <i class="fa-solid fa-circle-check me-2"></i> You have been safely signed out.
+                    </div>
+
+                    <!-- Alert for dynamic success messages -->
+                    <div th:if="${success}" class="alert alert-success border-0 bg-success bg-opacity-10 text-success small rounded-3 mb-4 animate-fade-in-up-delay delay-2" role="alert">
+                        <i class="fa-solid fa-circle-check me-2"></i> <span th:text="${success}">Success!</span>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form id="loginForm" th:action="@{/login}" method="post">
+                        <div class="mb-3 animate-fade-in-up-delay delay-2">
+                            <label for="username" class="form-label-custom">Username</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text">
+                                    <i class="fa-solid fa-user"></i>
+                                </span>
+                                <input type="text" id="username" name="username" class="form-control form-control-custom" placeholder="e.g. rahul or admin" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 animate-fade-in-up-delay delay-3">
+                            <label for="password" class="form-label-custom">Password</label>
+                            <div class="input-group-custom">
+                                <span class="input-group-text">
+                                    <i class="fa-solid fa-lock"></i>
+                                </span>
+                                <input type="password" id="password" name="password" class="form-control form-control-custom" placeholder="••••••••" required>
+                                <button class="input-group-text text-secondary pe-3" type="button" id="togglePassword">
+                                    <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Demo Quick Fill Pill -->
+                        <div class="p-2.5 rounded-2 mb-4 animate-fade-in-up-delay delay-3" style="background: rgba(163, 230, 53, 0.06); border: 1px solid rgba(163, 230, 53, 0.22);">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 x-small text-secondary">
+                                <span>Demo: <a href="javascript:void(0)" onclick="fillCreds('rahul', 'Rahul@123')" class="text-info text-decoration-none fw-bold">rahul</a></span>
+                                <span>Admin: <a href="javascript:void(0)" onclick="fillCreds('admin', 'Admin@123')" class="text-info text-decoration-none fw-bold">admin</a></span>
+                                <span>Super Admin: <a href="javascript:void(0)" onclick="fillCreds('superadmin', 'SuperAdmin@123')" class="text-warning text-decoration-none fw-bold">superadmin</a></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="btn btn-primary-custom w-100 py-3 mb-3 d-flex align-items-center justify-content-center gap-2 animate-fade-in-up-delay delay-4">
+                            <span id="btnText">Sign In</span>
+                            <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3 animate-fade-in-up-delay delay-5">
+                        <p class="small text-secondary mb-0">Don't have an account? 
+                            <a th:href="@{/register}" class="text-white fw-semibold text-decoration-none hover-underline text-gradient">Register now</a>
+                        </p>
+                    </div>
+
+                    <div class="text-center mt-4 animate-fade-in-up-delay delay-5">
+                        <a th:href="@{/}" class="small text-secondary text-decoration-none"><i class="fa-solid fa-arrow-left me-2"></i>Back to Home</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- Page Specific Script for Dual JWT/Session Sign-in and UI States -->
+    <script>
+        function fillCreds(u, p) {
+            document.getElementById('username').value = u;
+            document.getElementById('password').value = p;
+        }
+
+        // Password Visibility Toggle
+        const togglePassword = document.querySelector('#togglePassword');
+        const passwordInput = document.querySelector('#password');
+        const eyeIcon = document.querySelector('#eyeIcon');
+
+        togglePassword.addEventListener('click', function (e) {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            eyeIcon.classList.toggle('fa-eye');
+            eyeIcon.classList.toggle('fa-eye-slash');
+        });
+
+        // Form Submit Intercept for JWT + Session Auth
+        const loginForm = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let isJwtObtained = false;
+
+        loginForm.addEventListener('submit', async function(e) {
+            if (isJwtObtained) {
+                return;
+            }
+            e.preventDefault();
+
+            errorAlert.classList.add('d-none');
+            
+            submitBtn.disabled = true;
+            btnText.textContent = "Authenticating...";
+            btnSpinner.classList.remove('d-none');
+
+            const username = loginForm.username.value;
+            const password = loginForm.password.value;
+
+            try {
+                // 1. Fetch JWT from REST API Auth Controller
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Invalid username or password');
+                }
+
+                const loginData = await response.json();
+
+                // 2. Save JWT & details to localStorage for client-side API requests
+                localStorage.setItem('token', loginData.jwt);
+                localStorage.setItem('username', loginData.username);
+                localStorage.setItem('role', loginData.role);
+                localStorage.setItem('fullName', loginData.fullName);
+
+                // 3. Complete authentication by posting to Spring Security Session login
+                isJwtObtained = true;
+                btnText.textContent = "Signing in...";
+                loginForm.submit();
+
+            } catch (err) {
+                localStorage.clear();
+                
+                errorMessage.textContent = err.message || 'Connection refused or invalid credentials.';
+                errorAlert.classList.remove('d-none');
+                
+                submitBtn.disabled = false;
+                btnText.textContent = "Sign In";
+                btnSpinner.classList.add('d-none');
+            }
+        });
+
+        // Ensure authentication data is fully cleared when arriving on logout
+        if (window.location.search.includes('logout')) {
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+            } catch (e) {
+                console.warn(e);
+            }
+        }
+    </script>
+</body>
+</html>
